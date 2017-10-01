@@ -43,6 +43,7 @@ def parse_opt():
 
     # Discriminator Model settings
     parser.add_argument('--D_hidden_size', type=int, default=512, help='discriminator rnn hidden size')
+    parser.add_argumetn('--D_scheduling', type=int, default=5, help='Discriminator scheduling')
 
     # Optimization: General
     parser.add_argument('--max_epochs', type=int, default=-1,
