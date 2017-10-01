@@ -4,5 +4,6 @@
 
 /save
 /data
+/experiment
 *.pyc
 *.txt

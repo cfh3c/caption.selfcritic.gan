@@ -1,4 +1,7 @@
 import argparse
+import os
+from datetime import datetime
+
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -12,7 +15,7 @@ def parse_opt():
                     help='path to the directory containing the preprocessed att feats')
     parser.add_argument('--input_label_h5', type=str, default='data/cocotalk_label.h5',
                     help='path to the h5file containing the preprocessed dataset')
-    parser.add_argument('--start_from', type=str, default='save/',
+    parser.add_argument('--start_from', type=str, default='save/model_backup/showtell',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process: 
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
@@ -44,7 +47,7 @@ def parse_opt():
     # Optimization: General
     parser.add_argument('--max_epochs', type=int, default=-1,
                     help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=128,
+    parser.add_argument('--batch_size', type=int, default=2, # 128
                     help='minibatch size')
     parser.add_argument('--grad_clip', type=float, default=0.1, #5.,
                     help='clip gradients at this value')
@@ -92,8 +95,9 @@ def parse_opt():
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
     parser.add_argument('--save_checkpoint_every', type=int, default=2500,
                     help='how often to save a model checkpoint (in iterations)?')
-    parser.add_argument('--checkpoint_path', type=str, default='save',
-                    help='directory to store checkpointed models')
+    # parser.add_argument('--checkpoint_path', type=str, default='save',
+    #                 help='directory to store checkpointed models')
+    parser.add_argument('--checkpoint_path', type=str, default='experiment/%s' % datetime.today().strftime('%Y%m%d_%H%M%S'))
     parser.add_argument('--language_eval', type=int, default=1,
                     help='Evaluate language as well (1 = yes, 0 = no)? BLEU/CIDEr/METEOR/ROUGE_L? requires coco-caption code from Github.')
     parser.add_argument('--losses_log_every', type=int, default=25,
@@ -122,5 +126,10 @@ def parse_opt():
     assert args.language_eval == 0 or args.language_eval == 1, "language_eval should be 0 or 1"
     assert args.load_best_score == 0 or args.load_best_score == 1, "language_eval should be 0 or 1"
     assert args.train_only == 0 or args.train_only == 1, "language_eval should be 0 or 1"
+
+    if not os.path.isdir('experiment'):
+        os.mkdir('experiment')
+    if not os.path.isdir(args.checkpoint_path):
+        os.mkdir(args.checkpoint_path)
 
     return args

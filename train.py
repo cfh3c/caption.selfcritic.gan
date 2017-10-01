@@ -20,12 +20,39 @@ from dataloader import *
 import eval_utils
 import misc.utils as utils
 from misc.rewards import get_self_critical_reward, get_gan_reward
+from logger import Logger
 
 try:
     import tensorflow as tf
 except ImportError:
     print("Tensorflow not installed; No tensorboard logging.")
     tf = None
+
+
+def update_lr(opt, epoch, model, optimizer_G):
+
+    # Assign the learning rate
+    if epoch > opt.learning_rate_decay_start and opt.learning_rate_decay_start >= 0:
+        frac = (epoch - opt.learning_rate_decay_start) // opt.learning_rate_decay_every
+        decay_factor = opt.learning_rate_decay_rate ** frac
+        opt.current_lr = opt.learning_rate * decay_factor
+        utils.set_lr(optimizer_G, opt.current_lr)  # set the decayed rate
+    else:
+        opt.current_lr = opt.learning_rate
+    # Assign the scheduled sampling prob
+    if epoch > opt.scheduled_sampling_start and opt.scheduled_sampling_start >= 0:
+        frac = (epoch - opt.scheduled_sampling_start) // opt.scheduled_sampling_increase_every
+        opt.ss_prob = min(opt.scheduled_sampling_increase_prob * frac, opt.scheduled_sampling_max_prob)
+        model.ss_prob = opt.ss_prob
+
+    # If start self critical training
+    if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
+        sc_flag = True
+    else:
+        sc_flag = False
+
+    update_lr_flag = False
+    return opt, sc_flag, update_lr_flag, model, optimizer_G
 
 def add_summary_value(writer, key, value, iteration):
     summary = tf.Summary(value=[tf.Summary.Value(tag=key, simple_value=value)])
@@ -75,6 +102,8 @@ def train(opt):
     model_D.cuda()
     criterion_D = nn.CrossEntropyLoss(size_average=True)
 
+    logger = Logger(opt)
+
     update_lr_flag = True
     # Assure in training mode
     model.train()
@@ -83,35 +112,16 @@ def train(opt):
     crit = utils.LanguageModelCriterion()
     rl_crit = utils.RewardCriterion()
 
-    optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    optimizer_D = optim.Adam(model_D.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
     if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+        optimizer_G.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
 
     while True:
         if update_lr_flag:
-                # Assign the learning rate
-            if epoch > opt.learning_rate_decay_start and opt.learning_rate_decay_start >= 0:
-                frac = (epoch - opt.learning_rate_decay_start) // opt.learning_rate_decay_every
-                decay_factor = opt.learning_rate_decay_rate  ** frac
-                opt.current_lr = opt.learning_rate * decay_factor
-                utils.set_lr(optimizer, opt.current_lr) # set the decayed rate
-            else:
-                opt.current_lr = opt.learning_rate
-            # Assign the scheduled sampling prob
-            if epoch > opt.scheduled_sampling_start and opt.scheduled_sampling_start >= 0:
-                frac = (epoch - opt.scheduled_sampling_start) // opt.scheduled_sampling_increase_every
-                opt.ss_prob = min(opt.scheduled_sampling_increase_prob  * frac, opt.scheduled_sampling_max_prob)
-                model.ss_prob = opt.ss_prob
-
-            # If start self critical training
-            if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
-                sc_flag = True
-            else:
-                sc_flag = False
-
-            update_lr_flag = False
+            opt, sc_flag, update_lr_flag, model, optimizer_G = update_lr(opt, epoch, model, optimizer_G)
 
         start = time.time()
         # Load data from train split (0)
@@ -127,31 +137,76 @@ def train(opt):
         #fc_feats, att_feats, labels, masks = tmp
         fc_feats, labels, masks = tmp
 
-        optimizer.zero_grad()
-        if not sc_flag:
-            #loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
-            loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
-        else:
-            #gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
-            gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
-            #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
-            sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result)
-            gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data)
-            reward = sc_reward + gan_reward
-            loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
+        ############################################################################################################
+        ############################################ REINFORCE TRAINING ############################################
+        ############################################################################################################
+        if iteration % 5 != 0:
+            optimizer_G.zero_grad()
+            if not sc_flag:
+                #loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
+                loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
+            else:
+                #gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
+                gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
+                #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
+                sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
+                gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
+                reward = sc_reward + 1e-1*gan_reward
+                loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
-        loss.backward()
-        utils.clip_gradient(optimizer, opt.grad_clip)
-        optimizer.step()
-        train_loss = loss.data[0]
-        torch.cuda.synchronize()
-        end = time.time()
-        if not sc_flag:
-            print("iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, train_loss, end - start))
-        else:
-            print("iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, np.mean(reward[:,0]), end - start))
+            loss.backward()
+            utils.clip_gradient(optimizer_G, opt.grad_clip)
+            optimizer_G.step()
+            train_loss = loss.data[0]
+            torch.cuda.synchronize()
+            end = time.time()
+
+            if not sc_flag:
+                log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+                    .format(iteration, epoch, train_loss, end - start)
+                logger.write(log)
+            else:
+                log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
+                    .format(iteration, epoch, np.mean(reward[:,0]), end - start)
+                logger.write(log)
+
+        ######################################################################################################
+        ############################################ GAN TRAINING ############################################
+        ######################################################################################################
+        elif iteration % 5 == 0: # gan training
+            model_D.zero_grad()
+            optimizer_D.zero_grad()
+
+            fc_feats = Variable(fc_feats.data.cpu(), volatile=True).cuda()
+            labels = Variable(labels.data.cpu()).cuda()
+
+            sample_res, sample_logprobs = model.sample(fc_feats, {'sample_max':0}) #640, 16
+            greedy_res, greedy_logprobs = model.sample(fc_feats, {'sample_max':1}) #640, 16
+            gt_res = labels # 640, 18
+
+            sample_res_embed = model.embed(Variable(sample_res))
+            greedy_res_embed = model.embed(Variable(greedy_res))
+            gt_res_embed = model.embed(gt_res)
+
+            f_label = Variable(torch.FloatTensor(data['fc_feats'].shape[0]).cuda())
+            r_label = Variable(torch.FloatTensor(data['fc_feats'].shape[0]).cuda())
+            f_label.data.fill_(0)
+            r_label.data.fill_(1)
+
+            f_D_output = model_D(sample_res_embed.detach(), fc_feats.detach())
+            f_loss = criterion_D(f_D_output, f_label.long())
+            f_loss.backward()
+
+            r_D_output = model_D(gt_res_embed.detach(), fc_feats.detach())
+            r_loss = criterion_D(r_D_output, r_label.long())
+            r_loss.backward()
+
+            D_loss = f_loss + r_loss
+            optimizer_D.step()
+            torch.cuda.synchronize()
+
+            log = 'iter {} (epoch {}),  Discriminator loss : {}'.format(iteration, epoch, D_loss.data.cpu().numpy()[0])
+            logger.write(log)
 
         # Update the iteration and epoch
         iteration += 1
@@ -179,7 +234,9 @@ def train(opt):
             eval_kwargs = {'split': 'val',
                             'dataset': opt.input_json}
             eval_kwargs.update(vars(opt))
-            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, eval_kwargs)
+
+            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, logger, eval_kwargs)
+            logger.write_dict(lang_stats)
 
             # Write validation result into summary
             if tf is not None:
@@ -203,8 +260,8 @@ def train(opt):
                 checkpoint_path = os.path.join(opt.checkpoint_path, 'model.pth')
                 torch.save(model.state_dict(), checkpoint_path)
                 print("model saved to {}".format(checkpoint_path))
-                optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer.pth')
-                torch.save(optimizer.state_dict(), optimizer_path)
+                optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer_G.pth')
+                torch.save(optimizer_G.state_dict(), optimizer_path)
 
                 # Dump miscalleous informations
                 infos['iter'] = iteration

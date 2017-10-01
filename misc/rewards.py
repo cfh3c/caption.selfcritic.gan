@@ -26,7 +26,7 @@ def array_to_str(arr):
     return out.strip()
 
 #def get_self_critical_reward(model, fc_feats, att_feats, data, gen_result):
-def get_self_critical_reward(model, fc_feats, data, gen_result):
+def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     batch_size = gen_result.size(0)# batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
     
@@ -52,7 +52,8 @@ def get_self_critical_reward(model, fc_feats, data, gen_result):
     res = [{'image_id':i, 'caption': res[i]} for i in range(2 * batch_size)]
     gts = {i: gts[i % batch_size // seq_per_img] for i in range(2 * batch_size)}
     _, scores = CiderD_scorer.compute_score(gts, res)
-    print('Cider scores:', _)
+    log = 'Cider scores:' + str(_)
+    logger.write(log)
 
     scores = scores[:batch_size] - scores[batch_size:]
 
@@ -61,7 +62,7 @@ def get_self_critical_reward(model, fc_feats, data, gen_result):
     return rewards
 
 
-def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data):
+def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data, logger):
     batch_size = fc_feats.size(0)  # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
 
@@ -86,7 +87,8 @@ def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data):
     f_sample_loss = LossForEachBatch(f_D_sample_output, f_label, mode='NLL')
     f_greedy_loss = LossForEachBatch(f_D_greedy_output, f_label, mode='NLL')
     scores = f_sample_loss + f_greedy_loss
-    #print('GAN scores: %f' % scores)
+    log = 'GAN mean scores: %f' % scores.mean()
+    logger.write(log)
 
     rewards = np.repeat(scores[:, np.newaxis], sample_res.size(1), 1)
 

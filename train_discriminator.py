@@ -43,7 +43,7 @@ class Discriminator_trainer():
         self.opt.save_checkpoint_every = 1000
         self.opt.start_from = None
 
-    def train_discriminator(self, dataloader):
+    def pretrain_discriminator(self, dataloader):
 
         for group in self.D_optimizer.param_groups:
             group['lr'] = 0.0001
@@ -113,7 +113,6 @@ class Discriminator_trainer():
                     torch.save(self.model_D.state_dict(), checkpoint_path)
                     print("best model saved to {}".format(checkpoint_path))
 
-
     def valid_discriminator(self):
         self.save_discriminator()
 
@@ -138,4 +137,4 @@ if __name__ == "__main__":
     opt.seq_length = loader.seq_length
 
     trainer = Discriminator_trainer(opt)
-    trainer.train_discriminator(loader)
+    trainer.pretrain_discriminator(loader)

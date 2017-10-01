@@ -56,7 +56,7 @@ def language_eval(dataset, preds, model_id, split):
 
     return out
 
-def eval_split(model, crit, loader, eval_kwargs={}):
+def eval_split(model, crit, loader, logger, eval_kwargs={}):
     verbose = eval_kwargs.get('verbose', True)
     num_images = eval_kwargs.get('num_images', eval_kwargs.get('val_images_use', -1))
     split = eval_kwargs.get('split', 'val')
@@ -114,11 +114,12 @@ def eval_split(model, crit, loader, eval_kwargs={}):
             if eval_kwargs.get('dump_images', 0) == 1:
                 # dump the raw image to vis/ folder
                 cmd = 'cp "' + os.path.join(eval_kwargs['image_root'], data['infos'][k]['file_path']) + '" vis/imgs/img' + str(len(predictions)) + '.jpg' # bit gross
-                print(cmd)
                 os.system(cmd)
+                logger.write(cmd)
 
             if verbose:
-                print('image %s: %s' %(entry['image_id'], entry['caption']))
+                log = 'image %s: %s' %(entry['image_id'], entry['caption'])
+                logger.write(log)
 
         # if we wrapped around the split or used up val imgs budget then bail
         ix0 = data['bounds']['it_pos_now']
@@ -129,7 +130,8 @@ def eval_split(model, crit, loader, eval_kwargs={}):
             predictions.pop()
 
         if verbose:
-            print('evaluating validation preformance... %d/%d (%f)' %(ix0 - 1, ix1, loss))
+            log='evaluating validation preformance... %d/%d (%f)' %(ix0 - 1, ix1, loss)
+            logger.write(log)
 
         if data['bounds']['wrapped']:
             break
