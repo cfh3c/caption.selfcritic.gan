@@ -151,7 +151,7 @@ def train(opt):
                 #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
                 gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
-                reward = sc_reward + 1e-1*gan_reward
+                reward = sc_reward + gan_reward
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
             loss.backward()
