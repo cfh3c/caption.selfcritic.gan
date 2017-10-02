@@ -276,3 +276,15 @@ class Discriminator(nn.Module):
         embedding = self.self_attentive_sentence_embedding(input, im_input)
         out = self.net_D(embedding)
         return out
+
+
+class Euclidean_feature():
+    def __init__(self, opt):
+        self.opt = opt
+        self.im_embedding = nn.Sequential(nn.Linear(2048, 512), nn.BatchNorm1d(512), nn.ReLU())
+        self.net = nn.Sequential()
+
+    def forward(self, im_feat, sent_feat):
+
+
+        return x

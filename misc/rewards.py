@@ -86,7 +86,7 @@ def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data, logger):
 
     f_sample_loss = LossForEachBatch(f_D_sample_output, f_label, mode='NLL')
     f_greedy_loss = LossForEachBatch(f_D_greedy_output, f_label, mode='NLL')
-    scores = f_sample_loss + f_greedy_loss
+    scores = f_sample_loss - f_greedy_loss
     log = 'GAN mean scores: %f' % scores.mean()
     logger.write(log)
 

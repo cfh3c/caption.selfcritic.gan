@@ -126,7 +126,7 @@ def train(opt):
         start = time.time()
         # Load data from train split (0)
         data = loader.get_batch('train')
-        print('Read data:', time.time() - start)
+        #print('Read data:', time.time() - start)
 
         torch.cuda.synchronize()
         start = time.time()
@@ -140,7 +140,7 @@ def train(opt):
         ############################################################################################################
         ############################################ REINFORCE TRAINING ############################################
         ############################################################################################################
-        if iteration % opt.D_scheduling != 0:
+        if 1:#iteration % opt.D_scheduling != 0:
             optimizer_G.zero_grad()
             if not sc_flag:
                 #loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
@@ -151,7 +151,7 @@ def train(opt):
                 #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
                 gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
-                reward = sc_reward + gan_reward
+                reward = sc_reward + 10*gan_reward
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
             loss.backward()
@@ -173,7 +173,7 @@ def train(opt):
         ######################################################################################################
         ############################################ GAN TRAINING ############################################
         ######################################################################################################
-        elif iteration % opt.D_scheduling == 0: # gan training
+        else:#elif iteration % opt.D_scheduling == 0: # gan training
             model_D.zero_grad()
             optimizer_D.zero_grad()
 

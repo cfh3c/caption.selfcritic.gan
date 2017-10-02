@@ -36,7 +36,7 @@ class Discriminator_trainer():
         self.iteration = 0
 
     def load_pretrain_model_G(self):
-        self.model_G.load_state_dict(torch.load('save/model.pth'))
+        self.model_G.load_state_dict(torch.load('save/model_D/model_D_1360iter.pth'))
 
     def init_opt(self):
         self.opt.max_epoch = 10
@@ -70,7 +70,7 @@ class Discriminator_trainer():
 
             sample_res, sample_logprobs = self.model_G.sample(fc_feats, {'sample_max':0}) #640, 16
             greedy_res, greedy_logprobs = self.model_G.sample(fc_feats, {'sample_max':1}) #640, 16
-            gt_res = labels # 640, 18
+            gt_res = labels[:, 1:] # remove start token(0)
 
             sample_res_embed = self.model_G.embed(Variable(sample_res))
             greedy_res_embed = self.model_G.embed(Variable(greedy_res))
@@ -95,7 +95,9 @@ class Discriminator_trainer():
             torch.cuda.synchronize()
 
             if self.iteration % 1 == 0:
-                print('[%d/%d] Discriminator loss : %f' %(self.iteration, len(dataloader)/128, D_loss.data.cpu().numpy()[0]))
+                print('[%d/%d] Discriminator training..  f_loss : %f,  r_loss : %f , D_loss : %f'
+                      %(self.iteration, len(dataloader)/self.opt.batch_size, f_loss.data.cpu().numpy()[0],
+                        r_loss.data.cpu().numpy()[0], D_loss.data.cpu().numpy()[0]))
 
             # make evaluation on validation set, and save model
             #if (self.iteration % self.opt.save_checkpoint_every == 0):
