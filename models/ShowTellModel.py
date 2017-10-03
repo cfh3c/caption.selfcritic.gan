@@ -230,19 +230,23 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.opt = opt
 
-        self.net_D = nn.Sequential(nn.Linear(1024, 512),
+        self.net_D = nn.Sequential(nn.Linear(1024+512, 512),
                                    nn.ReLU(),
                                    nn.Linear(512, 2))
 
         self.bi_lstm = nn.LSTM(input_size=self.opt.D_hidden_size, hidden_size=self.opt.D_hidden_size, bias=True,
                                batch_first=True, bidirectional=True)
 
-        self.W_im_emb = nn.Sequential(nn.Linear(512, 512),
-                                      nn.ReLU())
-
         self.W_conv1 = nn.Sequential(nn.Conv1d(in_channels=16, out_channels=16, kernel_size=512))
         self.W_sent_emb1 = nn.Sequential(nn.Linear(1024, 512))
 
+        self.im_embedding = nn.Sequential(nn.Linear(2048, 512),
+                                          nn.BatchNorm1d(512),
+                                          nn.ReLU())
+
+        self.conv2d_1 = nn.Conv2d(1, 64, (1, 512))
+        self.conv2d_2 = nn.Conv2d(1, 64, (3, 512))
+        self.conv2d_3 = nn.Conv2d(1, 64, (5, 512))
 
     def self_attentive_sentence_embedding(self, res_embed, fc_feats):
         iter_batch_size = res_embed.size()[0]
@@ -254,7 +258,7 @@ class Discriminator(nn.Module):
         H_st_ = torch.transpose(bilstm_out, 0, 1)  # [640, 16, 1024]
         H_st = torch.cat(H_st_, 0)                 # [640x16,  1024]
         H_st = self.W_sent_emb1(H_st)              # [640x16,  512 ]
-        H_st = H_st.view(iter_batch_size, 16, 512)
+        H_st = H_st.view(iter_batch_size, 16, 512) # [640, 16, 512 ]
 
         # H_im = self.W_im_emb(im_input)                # [640x16, 512]
         # H_im = H_im.repeat(16, 1, 1).transpose(0, 1)  # [640, 16, 512]
@@ -272,19 +276,31 @@ class Discriminator(nn.Module):
 
         return embedding.squeeze(1)                # embedding = [640, 1024]
 
+    def conv_and_pool(self, x, conv):
+        x = F.relu(conv(x)).squeeze(3)
+        x = F.max_pool1d(x, x.size(2)).squeeze(2)
+        return x
+
+    def sentence_embedding_my(self, res_embed):
+        res_embed = torch.transpose(res_embed, 0, 1)     # [16, 640, 512]
+        res_embed = res_embed[:16]                       # [16, 640, 512]
+
+        #bilstm_out, hn = self.bi_lstm(res_embed)         # [16, 640, 1024]
+        bilstm_out = torch.transpose(res_embed, 0, 1)   # [640, 16, 1024]
+        bilstm_out = bilstm_out.unsqueeze(1)
+
+        x1 = self.conv_and_pool(bilstm_out, self.conv2d_1) #(N,Co)
+        x2 = self.conv_and_pool(bilstm_out, self.conv2d_2) #(N,Co)
+        x3 = self.conv_and_pool(bilstm_out, self.conv2d_3) #(N,Co)
+
+        feat = torch.cat((x1, x2, x3), 1)  # (N,len(Ks)*Co)
+
+        return feat
+
     def forward(self, input, im_input):
-        embedding = self.self_attentive_sentence_embedding(input, im_input)
+        sent_embedding = self.self_attentive_sentence_embedding(input, im_input)
+        #sent_embedding = self.sentence_embedding_my(input)
+        img_embedding = self.im_embedding(im_input)
+        embedding = torch.cat((sent_embedding, img_embedding), 1)
         out = self.net_D(embedding)
         return out
-
-
-class Euclidean_feature():
-    def __init__(self, opt):
-        self.opt = opt
-        self.im_embedding = nn.Sequential(nn.Linear(2048, 512), nn.BatchNorm1d(512), nn.ReLU())
-        self.net = nn.Sequential()
-
-    def forward(self, im_feat, sent_feat):
-
-
-        return x

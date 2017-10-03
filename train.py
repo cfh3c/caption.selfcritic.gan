@@ -177,11 +177,11 @@ def train(opt):
             model_D.zero_grad()
             optimizer_D.zero_grad()
 
-            fc_feats = Variable(fc_feats.data.cpu(), volatile=True).cuda()
+            fc_feats_temp = Variable(fc_feats.data.cpu(), volatile=True).cuda()
             labels = Variable(labels.data.cpu()).cuda()
 
-            sample_res, sample_logprobs = model.sample(fc_feats, {'sample_max':0}) #640, 16
-            greedy_res, greedy_logprobs = model.sample(fc_feats, {'sample_max':1}) #640, 16
+            sample_res, sample_logprobs = model.sample(fc_feats_temp, {'sample_max':0}) #640, 16
+            greedy_res, greedy_logprobs = model.sample(fc_feats_temp, {'sample_max':1}) #640, 16
             gt_res = labels # 640, 18
 
             sample_res_embed = model.embed(Variable(sample_res))

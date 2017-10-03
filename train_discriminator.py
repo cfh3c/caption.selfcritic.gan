@@ -36,7 +36,7 @@ class Discriminator_trainer():
         self.iteration = 0
 
     def load_pretrain_model_G(self):
-        self.model_G.load_state_dict(torch.load('save/model_D/model_D_1360iter.pth'))
+        self.model_G.load_state_dict(torch.load('save/model_backup/showtell/model.pth'))
 
     def init_opt(self):
         self.opt.max_epoch = 10
@@ -65,11 +65,11 @@ class Discriminator_trainer():
             self.model_D.zero_grad()
             self.D_optimizer.zero_grad()
 
-            fc_feats = Variable(fc_feats.data.cpu(), volatile=True).cuda()
+            fc_feats_temp = Variable(fc_feats.data.cpu(), volatile=True).cuda()
             labels = Variable(labels.data.cpu()).cuda()
 
-            sample_res, sample_logprobs = self.model_G.sample(fc_feats, {'sample_max':0}) #640, 16
-            greedy_res, greedy_logprobs = self.model_G.sample(fc_feats, {'sample_max':1}) #640, 16
+            sample_res, sample_logprobs = self.model_G.sample(fc_feats_temp, {'sample_max':0}) #640, 16
+            greedy_res, greedy_logprobs = self.model_G.sample(fc_feats_temp, {'sample_max':1}) #640, 16
             gt_res = labels[:, 1:] # remove start token(0)
 
             sample_res_embed = self.model_G.embed(Variable(sample_res))
