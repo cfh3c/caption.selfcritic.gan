@@ -11,7 +11,7 @@ import misc.utils as utils
 from torch import optim
 import time
 from six.moves import cPickle
-from models.ShowTellModel import ShowTellModel, Discriminator
+from models.ShowTellModel import ShowTellModel, Discriminator, Euclidean
 
 
 class Discriminator_trainer():
@@ -32,7 +32,7 @@ class Discriminator_trainer():
 
         """ only update trainable parameters """
         D_parameters = filter(lambda p: p.requires_grad, self.model_D.parameters())
-        self.D_optimizer = optim.Adam(D_parameters, lr=self.opt.learning_rate * 1e-1)
+        self.D_optimizer = optim.Adam(D_parameters, lr=self.opt.learning_rate)
         self.iteration = 0
 
     def load_pretrain_model_G(self):
@@ -127,6 +127,110 @@ class Discriminator_trainer():
         torch.save(self.D_optimizer.state_dict(), optimizer_path)
 
 
+class Euclidean_trainer():
+
+    def __init__(self, opt):
+
+        self.opt = opt
+        self.model_G = ShowTellModel(self.opt)
+        self.load_pretrain_model_G()
+        self.init_opt()
+        self.model_E = Euclidean(self.opt)
+        #self.load_pretrain_model_E()
+
+        self.data_loader = None
+        self.max_length = 16
+
+        self.criterion_E = torch.nn.CosineEmbeddingLoss(margin=0, size_average=True)
+
+        """ only update trainable parameters """
+        E_parameters = filter(lambda p: p.requires_grad, self.model_E.parameters())
+        self.E_optimizer = optim.Adam(E_parameters, lr=self.opt.learning_rate)
+        self.iteration = 0
+
+    def mseloss(self, input, target):
+        temp = torch.sum(torch.pow((input - target),2) / input.data.shape[1])
+        return temp
+
+    def load_pretrain_model_E(self):
+        self.model_E.load_state_dict(torch.load('save/model_E/model_E.pth'))
+
+    def load_pretrain_model_G(self):
+        self.model_G.load_state_dict(torch.load('save/model_backup/showtell/model.pth'))
+
+    def init_opt(self):
+        self.opt.max_epoch = 10
+        self.opt.save_checkpoint_every = 1000
+        self.opt.start_from = None
+
+    def pretrain_Euclidean(self, dataloader):
+
+        for group in self.E_optimizer.param_groups:
+            group['lr'] = 0.0001
+
+        self.model_E.cuda()
+        self.model_G.cuda()
+        self.criterion_E.cuda()
+
+        while True:
+            self.iteration += 1
+            data = dataloader.get_batch('train')
+
+            torch.cuda.synchronize()
+
+            tmp = [data['fc_feats'], data['labels'], data['masks']]
+            tmp = [Variable(torch.from_numpy(_), requires_grad=True).cuda() for _ in tmp]
+
+            fc_feats, labels, masks = tmp
+            batch_size = labels.size(0)
+
+            self.model_E.zero_grad()
+            self.E_optimizer.zero_grad()
+
+            labels = Variable(labels.data.cpu()).cuda()
+            gt_res = labels[:, 1:] # remove start token(0)
+
+            gt_res_embed = self.model_G.embed(gt_res)
+
+            gt_im_output, gt_sent_output = self.model_E(gt_res_embed, fc_feats)
+            #loss = self.mseloss(gt_im_output, gt_sent_output)
+            flags = Variable(torch.ones(batch_size)).cuda()
+            loss = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            loss.backward()
+            self.E_optimizer.step()
+
+            torch.cuda.synchronize()
+
+            if self.iteration % 1 == 0:
+                print('[%d/%d] Euclidean training..  euclidean distance _loss : %f'
+                      %(self.iteration, len(dataloader)/self.opt.batch_size, loss.data.cpu().numpy()[0]))
+
+            # make evaluation on validation set, and save model
+            if (self.iteration % 20 == 0):
+
+                checkpoint_path = os.path.join(self.opt.checkpoint_path, 'model_E.pth')
+                torch.save(self.model_E.state_dict(), checkpoint_path)
+                print("model saved to {}".format(checkpoint_path))
+                optimizer_path = os.path.join(self.opt.checkpoint_path, 'optimizer_E.pth')
+                torch.save(self.E_optimizer.state_dict(), optimizer_path)
+
+                best_flag = 1
+                if best_flag:
+                    checkpoint_path = os.path.join(self.opt.checkpoint_path, 'model_E-best.pth')
+                    torch.save(self.model_E.state_dict(), checkpoint_path)
+                    print("best model saved to {}".format(checkpoint_path))
+
+    def valid_discriminator(self):
+        self.save_discriminator()
+
+    def save_discriminator(self):
+        checkpoint_path = os.path.join(self.opt.expr_dir, 'model_E_pretrained.pth')
+        torch.save(self.model_E.state_dict(), checkpoint_path)
+
+        print("model saved to {}".format(checkpoint_path))
+        optimizer_path = os.path.join(self.opt.expr_dir, 'optimizer_E_pretrained.pth')
+        torch.save(self.E_optimizer.state_dict(), optimizer_path)
+
 
 if __name__ == "__main__":
     import opts
@@ -138,5 +242,8 @@ if __name__ == "__main__":
     opt.vocab_size = loader.vocab_size
     opt.seq_length = loader.seq_length
 
-    trainer = Discriminator_trainer(opt)
-    trainer.pretrain_discriminator(loader)
+    #trainer = Discriminator_trainer(opt)
+    #trainer.pretrain_discriminator(loader)
+
+    trainer = Euclidean_trainer(opt)
+    trainer.pretrain_Euclidean(loader)

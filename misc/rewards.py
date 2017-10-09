@@ -95,6 +95,33 @@ def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data, logger):
     return rewards
 
 
+def get_distance_reward(model_G, model_E, criterion_E, fc_feats, data, logger):
+    batch_size = fc_feats.size(0)  # batch_size = sample_size * seq_per_img
+    seq_per_img = batch_size // len(data['gts'])
+
+    # get greedy decoding baseline
+    sample_res, sample_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 0})  # 640, 16
+    greedy_res, greedy_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 1})  # 640, 16
+
+    sample_res_embed = model_G.embed(Variable(sample_res, volatile=True)).cuda()
+    greedy_res_embed = model_G.embed(Variable(greedy_res, volatile=True)).cuda()
+
+    f_E_sample_output_im, f_E_sample_output_sent = model_E(sample_res_embed.detach(), fc_feats.detach())
+    f_E_greedy_output_im, f_E_greedy_output_sent = model_E(greedy_res_embed.detach(), fc_feats.detach())
+
+    flags_sample = Variable(torch.ones(batch_size)).cuda()
+    flags_greedy = Variable(torch.ones(batch_size)).cuda()
+
+    f_sample_distance = CosineLossForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, flags_sample, criterion_E, mode='cosine')
+    f_greedy_distance = CosineLossForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, flags_greedy, criterion_E, mode='cosine')
+
+    scores = f_sample_distance - f_greedy_distance
+    log = 'Distance mean scores: %f' % scores.mean()
+    logger.write(log)
+
+    rewards = np.repeat(scores[:, np.newaxis], sample_res.size(1), 1)
+    return rewards
+
 def LossForEachBatch(outputs, labels, mode):
     if mode == 'BCE':
         # output must have passed through F.SIGMOID
@@ -115,5 +142,15 @@ def LossForEachBatch(outputs, labels, mode):
         # loss = [outputs[i][1] for i in range(outputs.size(0))]
         # return loss
         pass
+    else:
+        raise Exception('mode options must be BCE or NLL.')
+
+def CosineLossForEachBatch(outputs_im, outputs_sent, flags, criterion, mode):
+    if mode == '.':
+        pass
+    elif mode == 'cosine':
+        loss = [criterion(outputs_im[i].unsqueeze(0), outputs_sent[i].unsqueeze(0), flags[i].unsqueeze(0)).data.cpu().numpy()[0]
+                for i in range(outputs_im.size(0))]
+        return np.array(loss)
     else:
         raise Exception('mode options must be BCE or NLL.')

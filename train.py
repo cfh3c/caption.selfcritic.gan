@@ -15,11 +15,11 @@ from six.moves import cPickle
 
 import opts
 import models
-from models.ShowTellModel import Discriminator
+from models.ShowTellModel import Discriminator, Distance
 from dataloader import *
 import eval_utils
 import misc.utils as utils
-from misc.rewards import get_self_critical_reward, get_gan_reward
+from misc.rewards import get_self_critical_reward, get_gan_reward, get_distance_reward
 from logger import Logger
 
 try:
@@ -97,23 +97,28 @@ def train(opt):
     model = models.setup(opt)
     model.cuda()
 
-    model_D = Discriminator(opt)
-    model_D.load_state_dict(torch.load('save/model_D.pth'))
-    model_D.cuda()
-    criterion_D = nn.CrossEntropyLoss(size_average=True)
+    #model_D = Discriminator(opt)
+    #model_D.load_state_dict(torch.load('save/model_D.pth'))
+    #model_D.cuda()
+    #criterion_D = nn.CrossEntropyLoss(size_average=True)
+
+    model_E = Distance(opt)
+    model_E.load_state_dict(torch.load('save/model_E/model_E.pth'))
+    model_E.cuda()
+    criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
 
     logger = Logger(opt)
 
     update_lr_flag = True
     # Assure in training mode
     model.train()
-    model_D.train()
+    #model_D.train()
 
     crit = utils.LanguageModelCriterion()
     rl_crit = utils.RewardCriterion()
 
     optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-    optimizer_D = optim.Adam(model_D.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    #optimizer_D = optim.Adam(model_D.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
     if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
@@ -150,8 +155,10 @@ def train(opt):
                 gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
                 #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
-                gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
-                reward = sc_reward + 10*gan_reward
+                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
+                distance_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)
+                #reward = sc_reward + distance_reward*1
+                reward = sc_reward - distance_reward*1
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
             loss.backward()
