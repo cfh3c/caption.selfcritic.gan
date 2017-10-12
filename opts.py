@@ -48,7 +48,7 @@ def parse_opt():
     # Optimization: General
     parser.add_argument('--max_epochs', type=int, default=-1,
                     help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=128, # 128
+    parser.add_argument('--batch_size', type=int, default=4, # 128
                     help='minibatch size')
     parser.add_argument('--grad_clip', type=float, default=0.1, #5.,
                     help='clip gradients at this value')
@@ -94,7 +94,7 @@ def parse_opt():
     # Evaluation/Checkpointing
     parser.add_argument('--val_images_use', type=int, default=3200,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
-    parser.add_argument('--save_checkpoint_every', type=int, default=1000,
+    parser.add_argument('--save_checkpoint_every', type=int, default=400,
                     help='how often to save a model checkpoint (in iterations)?')
     # parser.add_argument('--checkpoint_path', type=str, default='save',
     #                 help='directory to store checkpointed models')

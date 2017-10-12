@@ -11,7 +11,7 @@ import misc.utils as utils
 from torch import optim
 import time
 from six.moves import cPickle
-from models.ShowTellModel import ShowTellModel, Discriminator, Euclidean
+from models.ShowTellModel import ShowTellModel, Discriminator, Distance
 
 
 class Discriminator_trainer():
@@ -135,7 +135,7 @@ class Euclidean_trainer():
         self.model_G = ShowTellModel(self.opt)
         self.load_pretrain_model_G()
         self.init_opt()
-        self.model_E = Euclidean(self.opt)
+        self.model_E = Distance(self.opt)
         #self.load_pretrain_model_E()
 
         self.data_loader = None

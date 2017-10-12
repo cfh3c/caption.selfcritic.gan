@@ -157,7 +157,6 @@ def train(opt):
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
                 #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
                 distance_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)
-                #reward = sc_reward + distance_reward*1
                 reward = sc_reward - distance_reward*1
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
