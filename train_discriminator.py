@@ -12,6 +12,7 @@ from torch import optim
 import time
 from six.moves import cPickle
 from models.ShowTellModel import ShowTellModel, Discriminator, Distance
+from collections import deque
 
 
 class Discriminator_trainer():
@@ -175,28 +176,42 @@ class Euclidean_trainer():
         while True:
             self.iteration += 1
             data = dataloader.get_batch('train')
-
-            torch.cuda.synchronize()
-
             tmp = [data['fc_feats'], data['labels'], data['masks']]
-            tmp = [Variable(torch.from_numpy(_), requires_grad=True).cuda() for _ in tmp]
-
-            fc_feats, labels, masks = tmp
-            batch_size = labels.size(0)
+            torch.cuda.synchronize()
 
             self.model_E.zero_grad()
             self.E_optimizer.zero_grad()
 
+            # flag 1 training
+            tmp1 = [Variable(torch.from_numpy(_), requires_grad=True).cuda() for _ in tmp]
+            fc_feats, labels, masks = tmp1
+            batch_size = labels.size(0)
             labels = Variable(labels.data.cpu()).cuda()
             gt_res = labels[:, 1:] # remove start token(0)
-
             gt_res_embed = self.model_G.embed(gt_res)
 
             gt_im_output, gt_sent_output = self.model_E(gt_res_embed, fc_feats)
             #loss = self.mseloss(gt_im_output, gt_sent_output)
             flags = Variable(torch.ones(batch_size)).cuda()
-            loss = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            loss1 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+
+            # flag -1 training
+            tmp2 = self.shuffle_data(tmp)
+            tmp2 = [Variable(torch.from_numpy(_), requires_grad=True).cuda() for _ in tmp2]
+            fc_feats, labels, masks = tmp2
+            batch_size = labels.size(0)
+            labels = Variable(labels.data.cpu()).cuda()
+            gt_res = labels[:, 1:] # remove start token(0)
+            gt_res_embed = self.model_G.embed(gt_res)
+
+            gt_im_output, gt_sent_output = self.model_E(gt_res_embed, fc_feats)
+            #loss = self.mseloss(gt_im_output, gt_sent_output)
+            flags = -Variable(torch.ones(batch_size)).cuda()
+            loss2 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+
+            loss = loss1 + loss2
             loss.backward()
+
             self.E_optimizer.step()
 
             torch.cuda.synchronize()
@@ -230,6 +245,17 @@ class Euclidean_trainer():
         print("model saved to {}".format(checkpoint_path))
         optimizer_path = os.path.join(self.opt.expr_dir, 'optimizer_E_pretrained.pth')
         torch.save(self.E_optimizer.state_dict(), optimizer_path)
+
+    def shuffle_data(self, tmp):
+        fc_feats, labels, masks = tmp
+        labels, masks = deque(labels), deque(masks)
+
+        k=random.randint(1, fc_feats.shape[0]/5-1)
+        labels.rotate(5*k)
+        masks.rotate(5*k)
+
+        tmp2 = [fc_feats, np.array(labels), np.array(masks)]
+        return tmp2
 
 
 if __name__ == "__main__":
