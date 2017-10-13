@@ -94,7 +94,7 @@ def parse_opt():
     # Evaluation/Checkpointing
     parser.add_argument('--val_images_use', type=int, default=3200,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
-    parser.add_argument('--save_checkpoint_every', type=int, default=400,
+    parser.add_argument('--save_checkpoint_every', type=int, default=50,
                     help='how often to save a model checkpoint (in iterations)?')
     # parser.add_argument('--checkpoint_path', type=str, default='save',
     #                 help='directory to store checkpointed models')

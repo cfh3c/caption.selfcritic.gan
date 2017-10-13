@@ -454,7 +454,8 @@ class Distance(nn.Module):
         out = F.relu(self.gmlp3(out))
 
         # Element-wise Sum
-        out = out.view(-1, n_object_pair, 512).mean(1)
+        #out = out.view(-1, n_object_pair, 512).mean(1)
+        out, _ = out.view(-1, n_object_pair, 512).max(1)
 
         return out
 

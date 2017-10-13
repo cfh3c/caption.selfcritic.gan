@@ -33,7 +33,7 @@ def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     # get greedy decoding baseline
     #greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True))
     greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True))
-
+    gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max': 0})
     res = OrderedDict()
     
     gen_result = gen_result.cpu().numpy()
@@ -112,9 +112,13 @@ def get_distance_reward(model_G, model_E, criterion_E, fc_feats, data, logger):
     flags_sample = Variable(torch.ones(batch_size)).cuda()
     flags_greedy = Variable(torch.ones(batch_size)).cuda()
 
-    f_sample_distance = CosineLossForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, flags_sample, criterion_E, mode='cosine')
-    f_greedy_distance = CosineLossForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, flags_greedy, criterion_E, mode='cosine')
+    #f_sample_distance_loss = CosineLossForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, flags_sample, criterion_E, mode='cosine')
+    #f_greedy_distance_loss = CosineLossForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, flags_greedy, criterion_E, mode='cosine')
 
+    f_sample_distance = CosineDistanceForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, criterion_E, mode='cosine')
+    f_greedy_distance = CosineDistanceForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, criterion_E, mode='cosine')
+
+    #scores = f_sample_distance - f_greedy_distance
     scores = f_sample_distance - f_greedy_distance
     log = 'Distance mean scores: %f' % scores.mean()
     logger.write(log)
@@ -153,4 +157,14 @@ def CosineLossForEachBatch(outputs_im, outputs_sent, flags, criterion, mode):
                 for i in range(outputs_im.size(0))]
         return np.array(loss)
     else:
-        raise Exception('mode options must be BCE or NLL.')
+        raise Exception('mode options check plz.')
+
+def CosineDistanceForEachBatch(outputs_im, outputs_sent, cosfunc, mode):
+    if mode == '.':
+        pass
+    elif mode == 'cosine':
+        distance = [cosfunc(outputs_im[i].unsqueeze(0), outputs_sent[i].unsqueeze(0)).data.cpu().numpy()[0]
+                for i in range(outputs_im.size(0))]
+        return np.array(distance)
+    else:
+        raise Exception('mode options check plz.')

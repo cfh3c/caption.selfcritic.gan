@@ -103,9 +103,10 @@ def train(opt):
     #criterion_D = nn.CrossEntropyLoss(size_average=True)
 
     model_E = Distance(opt)
-    model_E.load_state_dict(torch.load('save/model_E/model_E.pth'))
+    model_E.load_state_dict(torch.load('save/model_E/model_E_max5epoch.pth'))
     model_E.cuda()
-    criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
+    #criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
+    criterion_E = nn.CosineSimilarity()
 
     logger = Logger(opt)
 
@@ -148,16 +149,16 @@ def train(opt):
         if 1:#iteration % opt.D_scheduling != 0:
             optimizer_G.zero_grad()
             if not sc_flag:
-                #loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
                 loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
             else:
-                #gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
                 gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
                 #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
-                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)
-                distance_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)
-                reward = sc_reward - distance_reward*1
+                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)                # Criterion_D = nn.XEloss()
+                #distance_loss_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger) # criterion_E = nn.CosEmbedLoss()
+                cosine_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)         # criterion_E = nn.CosSim()
+                reward = sc_reward + cosine_reward*10
+                #reward = cosine_reward
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
 
             loss.backward()
@@ -173,7 +174,7 @@ def train(opt):
                 logger.write(log)
             else:
                 log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-                    .format(iteration, epoch, np.mean(reward[:,0]), end - start)
+                    .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
                 logger.write(log)
 
         ######################################################################################################
