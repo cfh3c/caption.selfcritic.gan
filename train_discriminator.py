@@ -137,24 +137,42 @@ class Euclidean_trainer():
         self.load_pretrain_model_G()
         self.init_opt()
         self.model_E = Distance(self.opt)
-        #self.load_pretrain_model_E()
+        self.load_pretrain_model_E()
 
         self.data_loader = None
         self.max_length = 16
+        self.max_epoch = 20
 
-        self.criterion_E = torch.nn.CosineEmbeddingLoss(margin=0, size_average=True)
+        self.criterion_E = torch.nn.CosineEmbeddingLoss(margin=-1, size_average=True)
 
         """ only update trainable parameters """
         E_parameters = filter(lambda p: p.requires_grad, self.model_E.parameters())
         self.E_optimizer = optim.Adam(E_parameters, lr=self.opt.learning_rate)
         self.iteration = 0
 
-    def mseloss(self, input, target):
-        temp = torch.sum(torch.pow((input - target),2) / input.data.shape[1])
-        return temp
+    def mseloss(self, input, target, flag=1):
+        if flag == 1:
+            temp = torch.sum(torch.pow((input - target),2) / input.data.shape[1])
+        elif flag == -1:
+            temp = torch.sum
+        else:
+            raise Exception, 'flag must be 1 or -1.'
+
+    def NCE_loss(self, input, target, flag=1):
+        input, target = F.logsigmoid(input), F.logsigmoid(target)
+        G_theta = input-target
+        h_theta = 1/(1+torch.exp(-G_theta))
+        if flag==1:
+            loss = -torch.log(h_theta)
+        elif flag==-1:
+            loss = -torch.log(1-h_theta)
+        else:
+            raise Exception, 'flag must be 1 or -1.'
+        loss = torch.mean(loss, 1)
+        return loss.mean(0)
 
     def load_pretrain_model_E(self):
-        self.model_E.load_state_dict(torch.load('save/model_E/model_E.pth'))
+        self.model_E.load_state_dict(torch.load('save/model_E_NCE/model_E_10epoch.pth'))
 
     def load_pretrain_model_G(self):
         self.model_G.load_state_dict(torch.load('save/model_backup/showtell/model.pth'))
@@ -167,7 +185,7 @@ class Euclidean_trainer():
     def pretrain_Euclidean(self, dataloader):
 
         for group in self.E_optimizer.param_groups:
-            group['lr'] = 0.0001
+            group['lr'] = 0.001
 
         self.model_E.cuda()
         self.model_G.cuda()
@@ -192,8 +210,9 @@ class Euclidean_trainer():
 
             gt_im_output, gt_sent_output = self.model_E(gt_res_embed, fc_feats)
             #loss = self.mseloss(gt_im_output, gt_sent_output)
-            flags = Variable(torch.ones(batch_size)).cuda()
-            loss1 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            #flags = Variable(torch.ones(batch_size)).cuda()
+            #loss1 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            loss1 = self.NCE_loss(gt_im_output, gt_sent_output, flag=1)
 
             # flag -1 training
             tmp2 = self.shuffle_data(tmp)
@@ -206,10 +225,12 @@ class Euclidean_trainer():
 
             gt_im_output, gt_sent_output = self.model_E(gt_res_embed, fc_feats)
             #loss = self.mseloss(gt_im_output, gt_sent_output)
-            flags = -Variable(torch.ones(batch_size)).cuda()
-            loss2 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            #flags = -Variable(torch.ones(batch_size)).cuda()
+            #loss2 = self.criterion_E(gt_im_output, gt_sent_output, flags)
+            loss2 = self.NCE_loss(gt_im_output, gt_sent_output, flag=-1)
 
-            loss = loss1 + loss2
+            loss = (loss1 + loss2)
+            #loss = loss1
             loss.backward()
 
             self.E_optimizer.step()
@@ -217,11 +238,14 @@ class Euclidean_trainer():
             torch.cuda.synchronize()
 
             if self.iteration % 1 == 0:
-                print('[%d/%d] Euclidean training..  euclidean distance _loss : %f'
-                      %(self.iteration, len(dataloader)/self.opt.batch_size, loss.data.cpu().numpy()[0]))
+                #print('[%d/%d] Euclidean training..  euclidean distance _loss : %f'
+                #      %(self.iteration, len(dataloader)/self.opt.batch_size, loss.data.cpu().numpy()[0]))
+                print('[%d/%d] Distance training.. loss1 : %f, loss2 : %f, loss_sum = %f'
+                       % (self.iteration, len(dataloader) / self.opt.batch_size,
+                          loss1.data.cpu().numpy()[0], loss2.data.cpu()[0], loss.data.cpu()[0]))
 
             # make evaluation on validation set, and save model
-            if (self.iteration % 20 == 0):
+            if (self.iteration % 100 == 0):
 
                 checkpoint_path = os.path.join(self.opt.checkpoint_path, 'model_E.pth')
                 torch.save(self.model_E.state_dict(), checkpoint_path)
@@ -234,6 +258,9 @@ class Euclidean_trainer():
                     checkpoint_path = os.path.join(self.opt.checkpoint_path, 'model_E-best.pth')
                     torch.save(self.model_E.state_dict(), checkpoint_path)
                     print("best model saved to {}".format(checkpoint_path))
+
+            if self.iteration >= len(dataloader) * self.max_epoch:
+                break
 
     def valid_discriminator(self):
         self.save_discriminator()
@@ -256,7 +283,6 @@ class Euclidean_trainer():
 
         tmp2 = [fc_feats, np.array(labels), np.array(masks)]
         return tmp2
-
 
 if __name__ == "__main__":
     import opts

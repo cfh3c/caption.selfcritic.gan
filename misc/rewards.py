@@ -15,6 +15,9 @@ sys.path.append("cider")
 from pyciderevalcap.ciderD.ciderD import CiderD
 
 CiderD_scorer = CiderD(df='coco-train-idxs')
+from collections import deque
+import random
+
 #CiderD_scorer = CiderD(df='corpus')
 
 def array_to_str(arr):
@@ -95,7 +98,7 @@ def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data, logger):
     return rewards
 
 
-def get_distance_reward(model_G, model_E, criterion_E, fc_feats, data, logger):
+def get_distance_reward(model_G, model_E, criterion_E, fc_feats, data, logger, is_mismatched=False):
     batch_size = fc_feats.size(0)  # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
 
@@ -106,21 +109,26 @@ def get_distance_reward(model_G, model_E, criterion_E, fc_feats, data, logger):
     sample_res_embed = model_G.embed(Variable(sample_res, volatile=True)).cuda()
     greedy_res_embed = model_G.embed(Variable(greedy_res, volatile=True)).cuda()
 
+    if is_mismatched == True:
+        fc_feats = rotate_data(fc_feats)
+        flags_sample = -Variable(torch.ones(batch_size)).cuda()
+        flags_greedy = -Variable(torch.ones(batch_size)).cuda()
+    else:
+        flags_sample = Variable(torch.ones(batch_size)).cuda()
+        flags_greedy = Variable(torch.ones(batch_size)).cuda()
+
     f_E_sample_output_im, f_E_sample_output_sent = model_E(sample_res_embed.detach(), fc_feats.detach())
     f_E_greedy_output_im, f_E_greedy_output_sent = model_E(greedy_res_embed.detach(), fc_feats.detach())
 
-    flags_sample = Variable(torch.ones(batch_size)).cuda()
-    flags_greedy = Variable(torch.ones(batch_size)).cuda()
+    f_sample_distance_loss = CosineLossForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, flags_sample, criterion_E, mode='cosine')
+    f_greedy_distance_loss = CosineLossForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, flags_greedy, criterion_E, mode='cosine')
 
-    #f_sample_distance_loss = CosineLossForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, flags_sample, criterion_E, mode='cosine')
-    #f_greedy_distance_loss = CosineLossForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, flags_greedy, criterion_E, mode='cosine')
+    #f_sample_distance = CosineDistanceForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, criterion_E, mode='cosine')
+    #f_greedy_distance = CosineDistanceForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, criterion_E, mode='cosine')
 
-    f_sample_distance = CosineDistanceForEachBatch(f_E_sample_output_im, f_E_sample_output_sent, criterion_E, mode='cosine')
-    f_greedy_distance = CosineDistanceForEachBatch(f_E_greedy_output_im, f_E_greedy_output_sent, criterion_E, mode='cosine')
-
+    scores = f_sample_distance_loss - f_greedy_distance_loss
     #scores = f_sample_distance - f_greedy_distance
-    scores = f_sample_distance - f_greedy_distance
-    log = 'Distance mean scores: %f' % scores.mean()
+    log = 'Distance loss: %f' % scores.mean()
     logger.write(log)
 
     rewards = np.repeat(scores[:, np.newaxis], sample_res.size(1), 1)
@@ -168,3 +176,13 @@ def CosineDistanceForEachBatch(outputs_im, outputs_sent, cosfunc, mode):
         return np.array(distance)
     else:
         raise Exception('mode options check plz.')
+
+def rotate_data(fc_feats, is_cuda=True):
+    k = random.randint(1, fc_feats.size()[0] / 5 - 1)
+    fc_feats = fc_feats.data.cpu().numpy()
+    tmp = deque(fc_feats)
+    tmp.rotate(5 * k)
+    tmp = Variable(torch.FloatTensor(np.array(tmp)))
+    if is_cuda:
+        tmp = tmp.cuda()
+    return tmp

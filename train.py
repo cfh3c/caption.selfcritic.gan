@@ -28,7 +28,6 @@ except ImportError:
     print("Tensorflow not installed; No tensorboard logging.")
     tf = None
 
-
 def update_lr(opt, epoch, model, optimizer_G):
 
     # Assign the learning rate
@@ -103,10 +102,10 @@ def train(opt):
     #criterion_D = nn.CrossEntropyLoss(size_average=True)
 
     model_E = Distance(opt)
-    model_E.load_state_dict(torch.load('save/model_E/model_E_max5epoch.pth'))
+    model_E.load_state_dict(torch.load('save/model_E_NCE/model_E_10epoch.pthsfdasdfadf'))
     model_E.cuda()
-    #criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
-    criterion_E = nn.CosineSimilarity()
+    criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
+    #criterion_E = nn.CosineSimilarity()
 
     logger = Logger(opt)
 
@@ -154,14 +153,14 @@ def train(opt):
                 gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
                 #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
                 sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
-                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)                # Criterion_D = nn.XEloss()
-                #distance_loss_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger) # criterion_E = nn.CosEmbedLoss()
-                cosine_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)         # criterion_E = nn.CosSim()
-                reward = sc_reward + cosine_reward*10
-                #reward = cosine_reward
+                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)                 # Criterion_D = nn.XEloss()
+                distance_loss_reward1 = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger, is_mismatched=False) # criterion_E = nn.CosEmbedLoss()
+                distance_loss_reward2 = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger, is_mismatched=True) # criterion_E = nn.CosEmbedLoss()
+                #cosine_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)         # criterion_E = nn.CosSim()
+                reward = distance_loss_reward1 + distance_loss_reward2
                 loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
+                loss.backward()
 
-            loss.backward()
             utils.clip_gradient(optimizer_G, opt.grad_clip)
             optimizer_G.step()
             train_loss = loss.data[0]
