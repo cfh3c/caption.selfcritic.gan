@@ -284,6 +284,7 @@ class Euclidean_trainer():
         tmp2 = [fc_feats, np.array(labels), np.array(masks)]
         return tmp2
 
+
 if __name__ == "__main__":
     import opts
     from dataloader import *
