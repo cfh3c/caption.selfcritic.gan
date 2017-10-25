@@ -16,7 +16,7 @@ def parse_opt():
                     help='path to the directory containing the preprocessed att feats')
     parser.add_argument('--input_label_h5', type=str, default='data/cocotalk_label.h5',
                     help='path to the h5file containing the preprocessed dataset')
-    parser.add_argument('--start_from', type=str, default='save/model_backup/showtell',
+    parser.add_argument('--start_from', type=str, default=None, #default='save/model_backup/showtell',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
@@ -65,7 +65,7 @@ def parse_opt():
     #Optimization: for the Language Model
     parser.add_argument('--optim', type=str, default='adam',
                     help='what update to use? rmsprop|sgd|sgdmom|adagrad|adam')
-    parser.add_argument('--learning_rate', type=float, default=4e-4,
+    parser.add_argument('--learning_rate', type=float, default=4e-5, #default = 4e-4
                     help='learning rate')
     parser.add_argument('--learning_rate_decay_start', type=int, default=-1,
                     help='at what iteration to start decaying learning rate? (-1 = dont) (in epoch)')
@@ -93,9 +93,9 @@ def parse_opt():
 
 
     # Evaluation/Checkpointing
-    parser.add_argument('--val_images_use', type=int, default=3200,
+    parser.add_argument('--val_images_use', type=int, default=-1,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
-    parser.add_argument('--save_checkpoint_every', type=int, default=100,
+    parser.add_argument('--save_checkpoint_every', type=int, default=1000,
                     help='how often to save a model checkpoint (in iterations)?')
     # parser.add_argument('--checkpoint_path', type=str, default='save',
     #                 help='directory to store checkpointed models')
@@ -117,7 +117,7 @@ def parse_opt():
     parser.add_argument('--vse_pretrained_path', type=str, default='save/model_VSE/model_best.pth.tar')
     parser.add_argument('--margin', default=0.2, type=float,
                         help='Rank loss margin.')
-    parser.add_argument('--num_epochs', default=100, type=int,
+    parser.add_argument('--num_epochs', default=50, type=int,
                         help='Number of training epochs.')
     # parser.add_argument('--batch_size', default=128, type=int,
     #                     help='Size of a training mini-batch.')

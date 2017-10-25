@@ -132,13 +132,19 @@ def train(opt):
         if not sc_flag:
             loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
         else:
-            gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
-            sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
-            curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
-            reward = curr_reward#sc_reward + curr_reward
+            #gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
+            #sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
+            #curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
+            #reward = curr_reward#sc_reward + curr_reward
 
-            loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
-            loss.backward()
+            loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
+            loss2.backward()
+            reward = np.ones((10,10))
+
+            #loss1 = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
+            #loss1.backward()
+
+            loss = loss2
 
         utils.clip_gradient(optimizer_G, opt.grad_clip)
         optimizer_G.step()
@@ -151,8 +157,10 @@ def train(opt):
                 .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
         else:
-            log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
+            #log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
+            #    .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
+            log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
 
         # Update the iteration and epoch

@@ -58,7 +58,10 @@ def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     log = 'Cider scores:' + str(_)
     logger.write(log)
 
-    scores = scores[:batch_size] - scores[batch_size:]
+    scores_sample = scores[:batch_size]
+    scores_greedy = scores[batch_size:]
+
+    scores = scores_sample - scores_greedy
 
     rewards = np.repeat(scores[:, np.newaxis], gen_result.shape[1], 1)
 

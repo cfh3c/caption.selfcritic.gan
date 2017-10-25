@@ -23,17 +23,25 @@ from models.VSE import order_sim
 def get_currscore_reward(model_G, model_VSE, fc_feats, gen_result, logger):
     batch_size = fc_feats.size(0)  # batch_size = sample_size * seq_per_img
 
-    #sample_res, sample_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 0})  # 640, 16
-    #greedy_res, greedy_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 1})  # 640, 16
+    sample_res, sample_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 0})  # 640, 16
+    greedy_res, greedy_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 1})  # 640, 16
 
-    rewards, masks, reward_bl = validate(model_VSE, fc_feats, gen_result)
+    rewards_sample, sample_masks = validate(model_VSE, fc_feats, sample_res)
+    rewards_greedy, greedy_masks = validate(model_VSE, fc_feats, greedy_res)
 
-    log = 'currscore rewards: %f' % rewards.mean()
+    rewards = -(rewards_sample - rewards_greedy)
+    log = 'currscore mean rewards: %f' % rewards.mean()
     logger.write(log)
 
-    reward_bl = np.repeat(np.repeat(reward_bl, masks.shape[0])[:,np.newaxis],masks.shape[1],1)
-    rewards = np.repeat(rewards[:, np.newaxis], masks.shape[1], 1)
-    rewards = (rewards - reward_bl) * masks
+    rewards_sample = np.repeat(rewards_sample[:, np.newaxis], sample_masks.shape[1], 1)
+    rewards_sample = rewards_sample * sample_masks
+    rewards_greedy = np.repeat(rewards_greedy[:, np.newaxis], sample_masks.shape[1], 1)
+    rewards_greedy = rewards_greedy * greedy_masks
+
+    rewards = -(rewards_sample - rewards_greedy)
+    #reward_bl = np.repeat(np.repeat(reward_bl, masks.shape[0])[:,np.newaxis],masks.shape[1],1)
+    #rewards = np.repeat(rewards[:, np.newaxis], sample_masks.shape[1], 1)
+    #rewards = (rewards - reward_bl) * masks
 
     return rewards
 
@@ -136,8 +144,9 @@ def reordering_batch_data(fc_feats, gen_result):
     fc_feats = torch.from_numpy(np.array(fc_feats))
     labels = torch.from_numpy(np.array(labels))
     lengths = np.array(lengths)
+    mask = np.array(mask)
 
-    return [fc_feats, labels, lengths], np.array(mask)
+    return [fc_feats, labels, lengths], mask
 
 
 def encode_data(model, fc_feats, gen_result):
@@ -319,11 +328,11 @@ def i2t(images, captions, npts=None, measure='cosine', return_ranks=False):
     #r5 = 100.0 * len(numpy.where(ranks < 5)[0]) / len(ranks)
     #r10 = 100.0 * len(numpy.where(ranks < 10)[0]) / len(ranks)
 
-    rank_reward = -100.0 * ranks / images.shape[0]
+    rank_reward = 1.0 * ranks / images.shape[0]
 
     r1 = len(numpy.where(ranks < 1)[0]) * 100. / len(ranks)
-    r3 = len(numpy.where(ranks < 3)[0]) * 100. / len(ranks)
-    r5 = len(numpy.where(ranks < 5)[0]) * 100. / len(ranks)
+    r3 = len(numpy.where(ranks < 5)[0]) * 100. / len(ranks)
+    r5 = len(numpy.where(ranks < 10)[0]) * 100. / len(ranks)
 
     medr = numpy.floor(numpy.median(ranks)) + 1
     meanr = ranks.mean() + 1
@@ -375,11 +384,11 @@ def t2i(images, captions, npts=None, measure='cosine', return_ranks=False):
     #r5 = 100.0 * len(numpy.where(ranks < 5)[0]) / len(ranks)
     #r10 = 100.0 * len(numpy.where(ranks < 10)[0]) / len(ranks)
 
-    rank_reward = -100.0 * ranks / images.shape[0]
+    rank_reward = 1.0 * ranks / images.shape[0]
 
     r1 = len(numpy.where(ranks < 1)[0]) * 100. / len(ranks)
-    r3 = len(numpy.where(ranks < 3)[0]) * 100. / len(ranks)
-    r5 = len(numpy.where(ranks < 5)[0]) * 100. / len(ranks)
+    r3 = len(numpy.where(ranks < 5)[0]) * 100. / len(ranks)
+    r5 = len(numpy.where(ranks < 10)[0]) * 100. / len(ranks)
 
     medr = numpy.floor(numpy.median(ranks)) + 1
     meanr = ranks.mean() + 1
@@ -405,7 +414,7 @@ def validate(model, fc_feats, gen_result, data_loader=None):
     #currscore = (r1 + r3 + r5 + r1i + r3i + r5i)/6 - 0.0
 
     rewards = t2i_rewards + i2t_rewards
-    reward_bl = np.mean(rewards)
+    #reward_bl = np.mean(rewards)
 
-    return rewards, masks, reward_bl #currscore, masks
+    return rewards, masks#, reward_bl #currscore, masks
 

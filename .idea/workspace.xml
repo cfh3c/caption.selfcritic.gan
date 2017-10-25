@@ -5,17 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b250006-f7de-4efb-9a95-597776d0723d" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/misc/rewards_vse.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/models/VSE.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/models/VSE_backup.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/opts_withVSE.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/pretrain_vse.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/train_vse_reward.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/train_discriminator.py" afterPath="$PROJECT_DIR$/pretrain_discriminator.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/pretrain_vse.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cider" afterPath="$PROJECT_DIR$/cider" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/eval_results/_val.json" afterPath="$PROJECT_DIR$/eval_results/_val.json" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opts.py" afterPath="$PROJECT_DIR$/opts.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/misc/rewards.py" afterPath="$PROJECT_DIR$/misc/rewards.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/misc/rewards_vse.py" afterPath="$PROJECT_DIR$/misc/rewards_vse.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opts_withVSE.py" afterPath="$PROJECT_DIR$/opts_withVSE.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train_vse_reward.py" afterPath="$PROJECT_DIR$/train_vse_reward.py" />
     </list>
     <ignored path="self-critical.pytorch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -38,8 +35,8 @@
       <file leaf-file-name="opts_withVSE.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/opts_withVSE.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="172">
-              <caret line="59" column="48" selection-start-line="59" selection-start-column="48" selection-end-line="59" selection-end-column="48" />
+            <state relative-caret-position="168">
+              <caret line="51" column="33" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="33" />
               <folding>
                 <element signature="e#1#16#0" expanded="true" />
               </folding>
@@ -47,17 +44,26 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="trainlog.txt" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/experiment/20171026_003000/trainlog.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="168">
+              <caret line="185749" column="46" selection-start-line="185749" selection-start-column="46" selection-end-line="185749" selection-end-column="46" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="train_vse_reward.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_vse_reward.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="358">
-              <caret line="148" column="23" selection-start-line="148" selection-start-column="23" selection-end-line="148" selection-end-column="23" />
+            <state relative-caret-position="294">
+              <caret line="139" column="66" selection-start-line="139" selection-start-column="66" selection-end-line="139" selection-end-column="66" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
                 <element signature="e#1692#1810#0" expanded="false" />
-                <element signature="e#6222#6266#0" expanded="false" />
-                <element signature="e#6374#7056#0" expanded="false" />
-                <element signature="e#7187#10093#0" expanded="false" />
+                <element signature="e#6555#6599#0" expanded="false" />
+                <element signature="e#7520#10426#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -66,27 +72,14 @@
       <file leaf-file-name="rewards_vse.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/misc/rewards_vse.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="173">
-              <caret line="22" column="4" selection-start-line="22" selection-start-column="4" selection-end-line="22" selection-end-column="4" />
+            <state relative-caret-position="556">
+              <caret line="187" column="33" selection-start-line="187" selection-start-column="33" selection-end-line="187" selection-end-column="33" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
-                <element signature="e#1196#1445#0" expanded="false" />
-                <element signature="e#1977#2634#0" expanded="false" />
-                <element signature="e#2669#3535#0" expanded="false" />
-                <element signature="e#5814#9103#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="VSE.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/models/VSE.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4716">
-              <caret line="335" column="0" selection-start-line="335" selection-start-column="0" selection-end-line="335" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#12#0" expanded="true" />
-                <element signature="e#1068#3655#0" expanded="false" />
+                <element signature="e#1666#1915#0" expanded="false" />
+                <element signature="e#2447#3104#0" expanded="false" />
+                <element signature="e#3139#4005#0" expanded="false" />
+                <element signature="e#6300#9589#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -124,7 +117,6 @@
         <option value="$PROJECT_DIR$/experiment/20171010_035612/trainlog.txt" />
         <option value="$PROJECT_DIR$/experiment/20171010_132943/trainlog.txt" />
         <option value="$PROJECT_DIR$/experiment/20171012_164436/trainlog.txt" />
-        <option value="$PROJECT_DIR$/misc/rewards.py" />
         <option value="$PROJECT_DIR$/testing.py" />
         <option value="$PROJECT_DIR$/train.py" />
         <option value="$PROJECT_DIR$/train_discriminator.py" />
@@ -134,16 +126,23 @@
         <option value="$PROJECT_DIR$/models/VSE_backup.py" />
         <option value="$PROJECT_DIR$/models/VSE.py" />
         <option value="$PROJECT_DIR$/dataloader.py" />
-        <option value="$PROJECT_DIR$/train_vse_reward.py" />
-        <option value="$PROJECT_DIR$/opts_withVSE.py" />
+        <option value="$PROJECT_DIR$/experiment/20171022_151657/trainlog.txt" />
+        <option value="$PROJECT_DIR$/experiment/20171022_161923/trainlog.txt" />
+        <option value="$PROJECT_DIR$/experiment/20171022_194329/trainlog.txt" />
+        <option value="$PROJECT_DIR$/misc/rewards.py" />
+        <option value="$PROJECT_DIR$/experiment/20171023_020332/trainlog.txt" />
+        <option value="$PROJECT_DIR$/experiment/20171023_032834/trainlog.txt" />
         <option value="$PROJECT_DIR$/misc/rewards_vse.py" />
+        <option value="$PROJECT_DIR$/experiment/20171024_030848/trainlog.txt" />
+        <option value="$PROJECT_DIR$/opts_withVSE.py" />
+        <option value="$PROJECT_DIR$/train_vse_reward.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="98" />
+    <option name="x" value="102" />
     <option name="y" value="52" />
-    <option name="width" value="1454" />
+    <option name="width" value="1556" />
     <option name="height" value="1005" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
@@ -171,7 +170,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -200,33 +199,19 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="misc" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-critical.pytorch" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-critical.pytorch" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value="experiment" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../vsepp" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunManager" selected="Python.train_vse_reward">
     <configuration default="false" name="train" type="PythonConfigurationType" factoryName="Python" temporary="true">
@@ -482,10 +467,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="98" y="52" width="1454" height="1005" extended-state="0" />
+    <frame x="102" y="52" width="1556" height="1005" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19090909" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.18342036" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4437086" sideWeight="0.5019674" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964602" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -500,7 +485,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3276644" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32671082" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -558,7 +543,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/misc/rewards.py</url>
-          <line>134</line>
+          <line>137</line>
           <option name="timeStamp" value="215" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -572,34 +557,29 @@
           <option name="timeStamp" value="219" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pretrain_vse.py</url>
-          <line>88</line>
-          <option name="timeStamp" value="241" />
+          <url>file://$PROJECT_DIR$/train_vse_reward.py</url>
+          <line>146</line>
+          <option name="timeStamp" value="398" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pretrain_vse.py</url>
-          <line>89</line>
-          <option name="timeStamp" value="248" />
+          <url>file://$PROJECT_DIR$/misc/rewards.py</url>
+          <line>65</line>
+          <option name="timeStamp" value="400" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pretrain_vse.py</url>
-          <line>72</line>
-          <option name="timeStamp" value="290" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/pretrain_vse.py</url>
-          <line>201</line>
-          <option name="timeStamp" value="294" />
+          <url>file://$PROJECT_DIR$/misc/rewards.py</url>
+          <line>63</line>
+          <option name="timeStamp" value="401" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/misc/rewards_vse.py</url>
-          <line>37</line>
-          <option name="timeStamp" value="384" />
+          <line>45</line>
+          <option name="timeStamp" value="402" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/train_vse_reward.py</url>
-          <line>121</line>
-          <option name="timeStamp" value="393" />
+          <url>file://$PROJECT_DIR$/misc/rewards_vse.py</url>
+          <line>418</line>
+          <option name="timeStamp" value="418" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
@@ -612,117 +592,15 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="397" />
+      <option name="time" value="419" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_153324/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_154724/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_160234/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_160638/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_161535/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/coco-caption/pycocoevalcap/eval.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="54" column="45" selection-start-line="54" selection-start-column="45" selection-end-line="54" selection-end-column="45" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_174206/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/eval_results/_val.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="0" column="1056" selection-start-line="0" selection-start-column="1056" selection-end-line="0" selection-end-column="1056" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171001_183122/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171002_144537/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/logger.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171002_172758/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/.gitignore">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD_scorer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="68" column="68" selection-start-line="68" selection-start-column="61" selection-end-line="68" selection-end-column="68" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171002_180545/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1504576">
-          <caret line="134121" column="15" selection-start-line="134121" selection-start-column="0" selection-end-line="134121" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/modules/conv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="182">
-          <caret line="231" column="8" selection-start-line="231" selection-start-column="8" selection-end-line="231" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="302">
-          <caret line="17" column="52" selection-start-line="17" selection-start-column="52" selection-end-line="17" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/modules/module.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="223" column="0" selection-start-line="223" selection-start-column="0" selection-end-line="223" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171010_132943/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="31853" column="6" selection-start-line="31853" selection-start-column="0" selection-end-line="31853" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171010_035612/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="254">
-          <caret line="61445" column="6" selection-start-line="61445" selection-start-column="0" selection-end-line="61445" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="156">
-          <caret line="963" column="0" selection-start-line="963" selection-start-column="0" selection-end-line="963" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_euclidean.py" />
     <entry file="file://$PROJECT_DIR$/models/AttModel.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="176">
           <caret line="201" column="16" selection-start-line="201" selection-start-column="16" selection-end-line="201" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171012_164436/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="43924" column="21" selection-start-line="43924" selection-start-column="21" selection-end-line="43924" selection-end-column="21" />
         </state>
       </provider>
     </entry>
@@ -753,7 +631,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="173">
           <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -761,7 +638,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="158">
           <caret line="54" column="4" selection-start-line="54" selection-start-column="4" selection-end-line="54" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -783,7 +659,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="389">
           <caret line="1387" column="40" selection-start-line="1387" selection-start-column="40" selection-end-line="1387" selection-end-column="40" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -808,18 +683,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/models/ShowTellModel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="30" column="64" selection-start-line="30" selection-start-column="64" selection-end-line="30" selection-end-column="64" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-            <element signature="e#11555#16325#0" expanded="false" />
-            <element signature="e#16359#21106#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/models/VSE_backup.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="516">
@@ -827,61 +690,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/misc/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="666">
-          <caret line="45" column="44" selection-start-line="45" selection-start-column="44" selection-end-line="45" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/sc_log.txt" />
-    <entry file="file://$PROJECT_DIR$/pretrain_discriminator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="286" column="0" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
-          <folding>
-            <element signature="e#449#4948#0" expanded="false" />
-            <element signature="e#4983#11088#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pretrain_vse.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="53">
-          <caret line="102" column="84" selection-start-line="102" selection-start-column="84" selection-end-line="102" selection-end-column="84" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-            <element signature="e#4344#5016#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-576">
-          <caret line="140" column="37" selection-start-line="140" selection-start-column="37" selection-end-line="140" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-            <element signature="e#733#1795#0" expanded="false" />
-            <element signature="e#1855#1973#0" expanded="false" />
-            <element signature="e#9786#10468#0" expanded="false" />
-            <element signature="e#11656#13505#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/misc/rewards.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="472">
-          <caret line="41" column="41" selection-start-line="41" selection-start-column="41" selection-end-line="41" selection-end-column="41" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-            <element signature="e#2259#3660#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/opts.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="288">
@@ -903,51 +712,204 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/pretrain_vse.py" />
+    <entry file="file://$PROJECT_DIR$/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="281">
+          <caret line="104" column="56" selection-start-line="104" selection-start-column="53" selection-end-line="104" selection-end-column="56" />
+          <folding>
+            <element signature="e#733#1795#0" expanded="false" />
+            <element signature="e#1855#1973#0" expanded="false" />
+            <element signature="e#9786#10468#0" expanded="false" />
+            <element signature="e#11656#13505#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/ShowTellModel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="67" column="50" selection-start-line="67" selection-start-column="50" selection-end-line="67" selection-end-column="50" />
+          <folding>
+            <element signature="e#11555#16325#0" expanded="false" />
+            <element signature="e#16359#21106#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pretrain_discriminator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="227">
+          <caret line="172" column="0" selection-start-line="172" selection-start-column="0" selection-end-line="172" selection-end-column="0" />
+          <folding>
+            <element signature="e#449#4948#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/models/VSE.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4716">
+        <state relative-caret-position="840">
           <caret line="335" column="0" selection-start-line="335" selection-start-column="0" selection-end-line="335" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171002_180545/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="194">
+          <caret line="3828" column="20" selection-start-line="3828" selection-start-column="20" selection-end-line="3828" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171019_162810/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171022_194329/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="218">
+          <caret line="43724" column="52" selection-start-line="43724" selection-start-column="52" selection-end-line="43724" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171022_222053/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1195">
+          <caret line="10951" column="61" selection-start-line="10951" selection-start-column="61" selection-end-line="10951" selection-end-column="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_014123/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_013520/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/misc/rewards.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="65" column="0" selection-start-line="65" selection-start-column="0" selection-end-line="65" selection-end-column="0" />
           <folding>
-            <element signature="e#0#12#0" expanded="true" />
-            <element signature="e#1068#3655#0" expanded="false" />
+            <element signature="e#2328#3729#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171018_035408/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171013_122007/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171012_164436/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="680">
+          <caret line="43934" column="30" selection-start-line="43934" selection-start-column="30" selection-end-line="43934" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171012_195406/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171010_035612/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="146">
+          <caret line="61448" column="26" selection-start-line="61448" selection-start-column="26" selection-end-line="61448" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171018_190058/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="248">
+          <caret line="17656" column="20" selection-start-line="17656" selection-start-column="20" selection-end-line="17656" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171022_151657/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="266">
+          <caret line="10593" column="6" selection-start-line="10593" selection-start-column="0" selection-end-line="10593" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171022_161923/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="16670" column="29" selection-start-line="16670" selection-start-column="29" selection-end-line="16670" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_020332/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_014944/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_014907/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_011428/trainlog.txt" />
+    <entry file="file://$PROJECT_DIR$/experiment/20171022_164858/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="284">
+          <caret line="37578" column="53" selection-start-line="37578" selection-start-column="53" selection-end-line="37578" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171023_032834/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="5342" column="21" selection-start-line="5342" selection-start-column="21" selection-end-line="5342" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/misc/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="178">
+          <caret line="40" column="8" selection-start-line="40" selection-start-column="8" selection-end-line="40" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171025_224924/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/opts_withVSE.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="172">
-          <caret line="59" column="48" selection-start-line="59" selection-start-column="48" selection-end-line="59" selection-end-column="48" />
+        <state relative-caret-position="168">
+          <caret line="51" column="33" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="33" />
           <folding>
             <element signature="e#1#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171024_030848/trainlog.txt">
+      <provider editor-type-id="text-editor">
+        <state relative-caret-position="842">
+          <caret line="311997" column="54" selection-start-line="311997" selection-start-column="54" selection-end-line="311997" selection-end-column="54" />
+        </state>
+      </provider>
+      <provider selected="true" editor-type-id="LargeFileEditor">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment/20171026_003000/trainlog.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="185749" column="46" selection-start-line="185749" selection-start-column="46" selection-end-line="185749" selection-end-column="46" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/misc/rewards_vse.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="173">
-          <caret line="22" column="4" selection-start-line="22" selection-start-column="4" selection-end-line="22" selection-end-column="4" />
+        <state relative-caret-position="556">
+          <caret line="187" column="33" selection-start-line="187" selection-start-column="33" selection-end-line="187" selection-end-column="33" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#1196#1445#0" expanded="false" />
-            <element signature="e#1977#2634#0" expanded="false" />
-            <element signature="e#2669#3535#0" expanded="false" />
-            <element signature="e#5814#9103#0" expanded="false" />
+            <element signature="e#1666#1915#0" expanded="false" />
+            <element signature="e#2447#3104#0" expanded="false" />
+            <element signature="e#3139#4005#0" expanded="false" />
+            <element signature="e#6300#9589#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/train_vse_reward.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="358">
-          <caret line="148" column="23" selection-start-line="148" selection-start-column="23" selection-end-line="148" selection-end-column="23" />
+        <state relative-caret-position="294">
+          <caret line="139" column="66" selection-start-line="139" selection-start-column="66" selection-end-line="139" selection-end-column="66" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
             <element signature="e#1692#1810#0" expanded="false" />
-            <element signature="e#6222#6266#0" expanded="false" />
-            <element signature="e#6374#7056#0" expanded="false" />
-            <element signature="e#7187#10093#0" expanded="false" />
+            <element signature="e#6555#6599#0" expanded="false" />
+            <element signature="e#7520#10426#0" expanded="false" />
           </folding>
         </state>
       </provider>
