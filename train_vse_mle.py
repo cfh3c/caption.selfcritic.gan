@@ -2,31 +2,22 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-import torch.optim as optim
-
-import numpy as np
-
 import time
-import os
-from six.moves import cPickle
 
-import opts
-import models
-from models.ShowTellModel import Discriminator, Distance
-from dataloader import *
+import torch.optim as optim
+from six.moves import cPickle
+from torch.autograd import Variable
+
 import eval_utils
 import misc.utils as utils
-from misc.rewards import get_self_critical_reward, get_gan_reward, get_distance_reward
+import models
+import opts_withVSE
+from dataloader import *
 from logger import Logger
 
-try:
-    import tensorflow as tf
-except ImportError:
-    print("Tensorflow not installed; No tensorboard logging.")
-    tf = None
+import tensorflow as tf
+from models.VSE import VSE
+from models.ShowTellModel_vsemle import ContrastiveLoss
 
 def update_lr(opt, epoch, model, optimizer_G):
 
@@ -96,29 +87,21 @@ def train(opt):
     model = models.setup(opt)
     model.cuda()
 
-    #model_D = Discriminator(opt)
-    #model_D.load_state_dict(torch.load('save/model_D.pth'))
-    #model_D.cuda()
-    #criterion_D = nn.CrossEntropyLoss(size_average=True)
+    model_VSE = VSE(opt)
 
-    model_E = Distance(opt)
-    model_E.load_state_dict(torch.load('save/model_E_NCE/model_E_10epoch.pthsfdasdfadf'))
-    model_E.cuda()
-    criterion_E = nn.CosineEmbeddingLoss(margin=0, size_average=True)
-    #criterion_E = nn.CosineSimilarity()
+    model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
+    print("=> loaded preterained vse model done.")
 
     logger = Logger(opt)
 
     update_lr_flag = True
     # Assure in training mode
     model.train()
-    #model_D.train()
 
     crit = utils.LanguageModelCriterion()
-    rl_crit = utils.RewardCriterion()
+    crit_vse = ContrastiveLoss()
 
     optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-    #optimizer_D = optim.Adam(model_D.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
     if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
@@ -128,91 +111,41 @@ def train(opt):
         if update_lr_flag:
             opt, sc_flag, update_lr_flag, model, optimizer_G = update_lr(opt, epoch, model, optimizer_G)
 
-        start = time.time()
         # Load data from train split (0)
-        data = loader.get_batch('train')
-        #print('Read data:', time.time() - start)
+        data = loader.get_batch('train', seq_per_img=opt.seq_per_img)
 
         torch.cuda.synchronize()
         start = time.time()
 
-        #tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
         tmp = [data['fc_feats'], data['labels'], data['masks']]
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
-        #fc_feats, att_feats, labels, masks = tmp
         fc_feats, labels, masks = tmp
 
-        ############################################################################################################
-        ############################################ REINFORCE TRAINING ############################################
-        ############################################################################################################
-        if 1:#iteration % opt.D_scheduling != 0:
-            optimizer_G.zero_grad()
-            if not sc_flag:
-                loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
-            else:
-                gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
-                #reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result)
-                sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
-                #gan_reward = get_gan_reward(model, model_D, criterion_D, fc_feats, data, logger)                 # Criterion_D = nn.XEloss()
-                distance_loss_reward1 = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger, is_mismatched=False) # criterion_E = nn.CosEmbedLoss()
-                distance_loss_reward2 = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger, is_mismatched=True) # criterion_E = nn.CosEmbedLoss()
-                #cosine_reward = get_distance_reward(model, model_E, criterion_E, fc_feats, data, logger)         # criterion_E = nn.CosSim()
-                reward = distance_loss_reward1 + distance_loss_reward2
-                loss = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
-                loss.backward()
+        optimizer_G.zero_grad()
+        if not sc_flag:
+            loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
+            loss.backward()
+        else:
+            outputs, hiddens = model(fc_feats, labels)
 
-            utils.clip_gradient(optimizer_G, opt.grad_clip)
-            optimizer_G.step()
-            train_loss = loss.data[0]
-            torch.cuda.synchronize()
-            end = time.time()
+            loss1 = crit(outputs, labels[:, 1:], masks[:, 1:])
+            loss1.backward(retain_graph=True)
 
-            if not sc_flag:
-                log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                    .format(iteration, epoch, train_loss, end - start)
-                logger.write(log)
-            else:
-                log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-                    .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
-                logger.write(log)
+            fc_feats_reduced = model.img_embed(fc_feats)
+            loss2 = crit_vse(fc_feats_reduced, hiddens, masks[:, 1:])
+            loss2.backward(retain_graph=True)
 
-        ######################################################################################################
-        ############################################ GAN TRAINING ############################################
-        ######################################################################################################
-        else:#elif iteration % opt.D_scheduling == 0: # gan training
-            model_D.zero_grad()
-            optimizer_D.zero_grad()
+            loss = loss1 + loss2
 
-            fc_feats_temp = Variable(fc_feats.data.cpu(), volatile=True).cuda()
-            labels = Variable(labels.data.cpu()).cuda()
+        utils.clip_gradient(optimizer_G, opt.grad_clip)
+        optimizer_G.step()
+        train_loss = loss.data[0]
+        torch.cuda.synchronize()
+        end = time.time()
 
-            sample_res, sample_logprobs = model.sample(fc_feats_temp, {'sample_max':0}) #640, 16
-            greedy_res, greedy_logprobs = model.sample(fc_feats_temp, {'sample_max':1}) #640, 16
-            gt_res = labels # 640, 18
-
-            sample_res_embed = model.embed(Variable(sample_res))
-            greedy_res_embed = model.embed(Variable(greedy_res))
-            gt_res_embed = model.embed(gt_res)
-
-            f_label = Variable(torch.FloatTensor(data['fc_feats'].shape[0]).cuda())
-            r_label = Variable(torch.FloatTensor(data['fc_feats'].shape[0]).cuda())
-            f_label.data.fill_(0)
-            r_label.data.fill_(1)
-
-            f_D_output = model_D(sample_res_embed.detach(), fc_feats.detach())
-            f_loss = criterion_D(f_D_output, f_label.long())
-            f_loss.backward()
-
-            r_D_output = model_D(gt_res_embed.detach(), fc_feats.detach())
-            r_loss = criterion_D(r_D_output, r_label.long())
-            r_loss.backward()
-
-            D_loss = f_loss + r_loss
-            optimizer_D.step()
-            torch.cuda.synchronize()
-
-            log = 'iter {} (epoch {}),  Discriminator loss : {}'.format(iteration, epoch, D_loss.data.cpu().numpy()[0])
-            logger.write(log)
+        log = "iter {} (epoch {}), train_loss1 = {:.3f}, train_loss2 = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, loss1.data.cpu().numpy()[0], loss2.data.cpu().numpy()[0], end - start)
+        logger.write(log)
 
         # Update the iteration and epoch
         iteration += 1
@@ -226,11 +159,9 @@ def train(opt):
                 add_summary_value(tf_summary_writer, 'train_loss', train_loss, iteration)
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
                 add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
-                if sc_flag:
-                    add_summary_value(tf_summary_writer, 'avg_reward', np.mean(reward[:,0]), iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward[:,0])
+            loss_history[iteration] = train_loss
             lr_history[iteration] = opt.current_lr
             ss_prob_history[iteration] = model.ss_prob
 
@@ -298,5 +229,5 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-opt = opts.parse_opt()
+opt = opts_withVSE.parse_opt()
 train(opt)

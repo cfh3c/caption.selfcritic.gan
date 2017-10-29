@@ -36,7 +36,8 @@ def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     # get greedy decoding baseline
     #greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True))
     greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True))
-    gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max': 0})
+    #gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max': 0})
+
     res = OrderedDict()
     
     gen_result = gen_result.cpu().numpy()
@@ -66,6 +67,50 @@ def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     rewards = np.repeat(scores[:, np.newaxis], gen_result.shape[1], 1)
 
     return rewards
+
+
+def get_reward_test(model, fc_feats, data, gen_result, logger):
+    batch_size = gen_result.size(0)  # batch_size = sample_size * seq_per_img
+    seq_per_img = batch_size // len(data['gts'])
+
+    # get greedy decoding baseline
+    # greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True))
+    greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True))
+    gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max': 0})
+    res = OrderedDict()
+
+    gen_result = gen_result.cpu().numpy()
+    greedy_res = greedy_res.cpu().numpy()
+    for i in range(batch_size):
+        res[i] = [array_to_str(gen_result[i])]
+    for i in range(batch_size):
+        res[batch_size + i] = [array_to_str(greedy_res[i])]
+    for i in range(batch_size):
+        res[batch_size*2 + i] = [array_to_str(data['gts'][i//seq_per_img][i % seq_per_img])]
+
+    gts = OrderedDict()
+    for i in range(len(data['gts'])):
+        gts[i] = [array_to_str(data['gts'][i][j]) for j in range(len(data['gts'][i]))]
+
+    # _, scores = Bleu(4).compute_score(gts, res)
+    # scores = np.array(scores[3])
+    res = [{'image_id': i, 'caption': res[i]} for i in range(3 * batch_size)]
+    gts = {i: gts[i % batch_size // seq_per_img] for i in range(3 * batch_size)}
+    _, scores = CiderD_scorer.compute_score(gts, res)
+    log = 'Cider scores:' + str(_)
+    #logger.write(log)
+
+    scores_sample = scores[:batch_size]
+    scores_greedy = scores[batch_size:batch_size*2]
+    scores_gt = scores[batch_size*2:]
+
+    scores_s_greedy = scores_sample - scores_greedy
+    scores_s_gt = scores_sample-scores_gt
+
+    rewards = np.repeat(scores_s_greedy[:, np.newaxis], gen_result.shape[1], 1)
+
+    return rewards
+
 
 
 def get_gan_reward(model_G, model_D, criterion_D, fc_feats, data, logger):

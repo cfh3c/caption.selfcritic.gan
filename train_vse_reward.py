@@ -14,11 +14,11 @@ import models
 import opts_withVSE
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward
+from misc.rewards import get_self_critical_reward, get_reward_test
 
 import tensorflow as tf
 from models.VSE import VSE
-from misc.rewards_vse import get_currscore_reward, reordering_data
+from misc.rewards_vse import get_currscore_reward, reordering_data, get_sim_reward
 
 def update_lr(opt, epoch, model, optimizer_G):
 
@@ -131,20 +131,23 @@ def train(opt):
         optimizer_G.zero_grad()
         if not sc_flag:
             loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
+            loss.backward()
         else:
-            #gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
+            gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
             #sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
+            #test = get_reward_test(model, fc_feats, data, gen_result, logger)
             #curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
-            #reward = curr_reward#sc_reward + curr_reward
+            sim_reward = get_sim_reward(model, model_VSE, fc_feats, gen_result, logger)
+            reward = sim_reward
 
-            loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
-            loss2.backward()
-            reward = np.ones((10,10))
+            #loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
+            #loss2.backward()
+            #reward = np.ones((10,10))
 
-            #loss1 = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
-            #loss1.backward()
+            loss1 = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
+            loss1.backward()
 
-            loss = loss2
+            loss = loss1
 
         utils.clip_gradient(optimizer_G, opt.grad_clip)
         optimizer_G.step()
@@ -157,10 +160,10 @@ def train(opt):
                 .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
         else:
-            #log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-            #    .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
-            log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, train_loss, end - start)
+            log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
+            #log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+            #    .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
 
         # Update the iteration and epoch
@@ -215,7 +218,7 @@ def train(opt):
                 checkpoint_path = os.path.join(opt.checkpoint_path, 'model.pth')
                 torch.save(model.state_dict(), checkpoint_path)
                 print("model saved to {}".format(checkpoint_path))
-                optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer_G.pth')
+                optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer.pth')
                 torch.save(optimizer_G.state_dict(), optimizer_path)
 
                 # Dump miscalleous informations

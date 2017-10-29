@@ -87,6 +87,7 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
             fc_feats, labels, masks = tmp
 
             #loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:]).data[0]
+            #loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:]).data[0]
             loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:]).data[0]
 
             loss_sum = loss_sum + loss

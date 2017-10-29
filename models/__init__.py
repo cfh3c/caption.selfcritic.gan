@@ -9,6 +9,7 @@ import numpy as np
 import misc.utils as utils
 import torch
 
+from .ShowTellModel_vsemle import ShowTellModel_vsemle
 from .ShowTellModel import ShowTellModel
 from .FCModel import FCModel
 from .CaptionModel import ShowAttendTellModel, AllImgModel
@@ -36,6 +37,7 @@ def setup(opt):
         model = TopDownModel(opt)
     elif opt.caption_model == 'show_tell':
         model = ShowTellModel(opt)
+        #model = ShowTellModel_vsemle(opt)
     else:
         raise Exception("Caption model not supported: {}".format(opt.caption_model))
 
