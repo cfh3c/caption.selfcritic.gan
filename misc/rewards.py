@@ -69,6 +69,45 @@ def get_self_critical_reward(model, fc_feats, data, gen_result, logger):
     return rewards
 
 
+def get_self_critical_reward_forTS(model, model2, fc_feats, data, gen_result, logger):
+    batch_size = gen_result.size(0)  # batch_size = sample_size * seq_per_img
+    seq_per_img = batch_size // len(data['gts'])
+
+    greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True))
+    greedy_res_2, _ = model2.sample(Variable(fc_feats.data, volatile=True))
+
+    res = OrderedDict()
+
+    gen_result = gen_result.cpu().numpy()
+    greedy_res = greedy_res.cpu().numpy()
+    for i in range(batch_size):
+        res[i] = [array_to_str(gen_result[i])]
+        res[batch_size + i] = [array_to_str(greedy_res[i])]
+        res[batch_size*2 + i] = [array_to_str(greedy_res_2[i])]
+
+    gts = OrderedDict()
+    for i in range(len(data['gts'])):
+        gts[i] = [array_to_str(data['gts'][i][j]) for j in range(len(data['gts'][i]))]
+
+    res = [{'image_id': i, 'caption': res[i]} for i in range(3 * batch_size)]
+    gts = {i: gts[i % batch_size // seq_per_img] for i in range(3 * batch_size)}
+    _, scores = CiderD_scorer.compute_score(gts, res)
+    log = 'Cider scores:' + str(_)
+    logger.write(log)
+
+    scores_sample = scores[:batch_size]
+    scores_greedy = scores[batch_size:batch_size*2]
+    scores_greedy_2 = scores[batch_size*2:]
+
+    scores_1 = scores_sample - scores_greedy # TS
+    scores_2 = scores_sample - scores_greedy_2 # self
+
+    scores = scores_1 * 0.7 + scores_2 * 0.3
+    rewards = np.repeat(scores[:, np.newaxis], gen_result.shape[1], 1)
+
+    return rewards
+
+
 def get_reward_test(model, fc_feats, data, gen_result, logger):
     batch_size = gen_result.size(0)  # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
