@@ -124,9 +124,9 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
 
   # input json
-  parser.add_argument('--input_json', default='/home/gt/_code/self-critical.pytorch/data/dataset_coco.json', help='input json file to process into hdf5')
-  parser.add_argument('--dict_json', default='/home/gt/_code/self-critical.pytorch/data/cocotalk.json', help='output json file')
-  parser.add_argument('--output_pkl', default='/home/gt/_code/self-critical.pytorch/data/coco-all', help='output pickle file')
+  parser.add_argument('--input_json', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/dataset_coco.json', help='input json file to process into hdf5')
+  parser.add_argument('--dict_json', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/cocotalk.json', help='output json file')
+  parser.add_argument('--output_pkl', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/coco-all', help='output pickle file')
   parser.add_argument('--split', default='all', help='test, val, train, all')
   args = parser.parse_args()
   params = vars(args) # convert to ordinary dict

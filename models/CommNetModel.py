@@ -13,6 +13,266 @@ import time
 from six.moves import cPickle
 
 
+class CommNetModel(nn.Module):
+    def __init__(self, opt, model1, model2):
+        super(CommNetModel, self).__init__()
+        self.opt = opt
+
+        self.model1 = model1
+        self.model2 = model2
+
+        # self.Control_1_state = nn.Linear(opt.rnn_size, opt.rnn_size)
+        # self.Control_1_mean = nn.Linear(opt.rnn_size, opt.rnn_size)
+        #
+        # self.Control_2_state = nn.Linear(opt.rnn_size, opt.rnn_size)
+        # self.Control_2_mean = nn.Linear(opt.rnn_size, opt.rnn_size)
+
+        self.state_embedding_0 = nn.Linear(opt.rnn_size, opt.rnn_size)
+        self.state_embedding_1 = nn.Linear(opt.rnn_size, opt.rnn_size)
+        self.Control_0 = nn.Linear(opt.rnn_size, opt.rnn_size)
+        self.Control_1 = nn.Linear(opt.rnn_size, opt.rnn_size)
+
+        self.ss_prob = 0.0
+        self.seq_length = 16
+
+    def forward(self, fc_feats, att_feats, seq):
+        batch_size = fc_feats.size(0)
+
+        state1 = self.model1.init_hidden(batch_size)
+        state2 = self.model2.init_hidden(batch_size)
+
+        outputs1, outputs2 = list(), list()
+
+        for i in range(seq.size(1)):
+            if i == 0:
+                xt1 = self.model1.img_embed(fc_feats)
+                xt2 = self.model2.img_embed(fc_feats)
+            else:
+                if self.model1.training and i >= 2 and self.model1.ss_prob > 0.0:  # otherwiste no need to sample
+                    sample_prob = fc_feats.data.new(batch_size).uniform_(0, 1)
+                    sample_mask = sample_prob < self.model1.ss_prob
+                    if sample_mask.sum() == 0:
+                        it1 = seq[:, i - 1].clone()
+                        it2 = seq[:, i - 1].clone()
+                    else:
+                        sample_ind = sample_mask.nonzero().view(-1)
+                        it1 = seq[:, i - 1].data.clone()
+                        it2 = seq[:, i - 1].data.clone()
+                        prob_prev1 = torch.exp(outputs1[-1].data)  # fetch prev distribution: shape Nx(M+1)
+                        prob_prev2 = torch.exp(outputs2[-1].data)  # fetch prev distribution: shape Nx(M+1)
+                        it1.index_copy_(0, sample_ind, torch.multinomial(prob_prev1, 1).view(-1).index_select(0, sample_ind))
+                        it2.index_copy_(0, sample_ind, torch.multinomial(prob_prev2, 1).view(-1).index_select(0, sample_ind))
+                        it1 = Variable(it1, requires_grad=False)
+                        it2 = Variable(it2, requires_grad=False)
+                else:
+                    it1 = seq[:, i - 1].clone()
+                    it2 = seq[:, i - 1].clone()
+
+                if i >= 2 and seq[:, i - 1].data.sum() == 0:
+                    break
+                xt1 = self.model1.embed(it1)
+                xt2 = self.model2.embed(it2)
+
+            #mean_state = [(state1[i] + state2[i]) / 2 for i in range(2)]
+            #state1_comm = self.Controller(state1, mean_state)
+            #state2_comm = self.Controller(state2, mean_state)
+
+            state1_comm = self.Controller2(state1, state2)
+            state2_comm = self.Controller2(state2, state1)
+
+            output1, state1 = self.model1.core(xt1.unsqueeze(0), state1_comm)
+            output2, state2 = self.model2.core(xt2.unsqueeze(0), state2_comm)
+
+            output1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))), dim=1)
+            outputs1.append(output1)
+
+            output2 = F.log_softmax(self.model2.logit(self.model2.dropout(output2.squeeze(0))), dim=1)
+            outputs2.append(output2)
+
+        outputs1 = torch.cat([_.unsqueeze(1) for _ in outputs1[1:]], 1).contiguous()
+        outputs2 = torch.cat([_.unsqueeze(1) for _ in outputs2[1:]], 1).contiguous()
+
+        return outputs1, outputs2
+
+    def Controller(self, state, mean_state, rnn_type='LSTM'):
+
+        if rnn_type =='LSTM':
+
+            Cont1_1 = self.Control_1_state(state[0])      # [0]=cell_state / [1]=hidden_state??
+            Cont1_2 = self.Control_1_mean(mean_state[0])
+            state_comm_1 = F.sigmoid(Cont1_1 + Cont1_2)
+
+            Cont2_1 = self.Control_2_state(state[1])
+            Cont2_2 = self.Control_2_mean(mean_state[1])
+            state_comm_2 = F.sigmoid(Cont2_1 + Cont2_2)
+
+            state_comm = (state_comm_1, state_comm_2)
+
+        elif rnn_type == 'RNN':
+            pass
+        else:
+            pass
+
+        return state_comm
+
+
+    def Controller2(self, state, state2, rnn_type='LSTM'):
+
+        if rnn_type =='LSTM':
+            Cont1_1 = self.state_embedding_0(state[0])
+            Cont1_2 = self.state_embedding_0(state2[0])
+            #state0 = self.Control_0(Cont1_1 + Cont1_2)
+            state0 = self.Control_0(F.leaky_relu(Cont1_1) + F.leaky_relu(Cont1_2))
+
+            Cont2_1 = self.state_embedding_1(state[1])
+            Cont2_2 = self.state_embedding_1(state2[1])
+            #state1 = self.Control_1(Cont2_1 + Cont2_2)
+            state1 = self.Control_1(F.leaky_relu(Cont2_1) + F.leaky_relu(Cont2_2))
+
+            state_comm = (F.sigmoid(state0), F.sigmoid(state1))
+
+        elif rnn_type == 'RNN':
+            pass
+        else:
+            pass
+
+        return state_comm
+
+
+    def sample_2model(self, fc_feats, att_feats, opt={}):
+        sample_max = opt.get('sample_max', 1)
+        beam_size = opt.get('beam_size', 1)
+        temperature = opt.get('temperature', 1.0)
+        if beam_size > 1:
+            raise NameError, 'Fuck you baby'
+
+        batch_size = fc_feats.size(0)
+        state1 = self.model1.init_hidden(batch_size)
+        state2 = self.model2.init_hidden(batch_size)
+
+        seq1, seq2 = [], []
+        seqLogprobs1, seqLogprobs2 = [], []
+
+        for t in range(self.seq_length + 2):
+            if t == 0:
+                xt1 = self.model1.img_embed(fc_feats)
+                xt2 = self.model2.img_embed(fc_feats)
+            else:
+                if t == 1:  # input <bos>
+                    it1 = fc_feats.data.new(batch_size).long().zero_()
+                    it2 = fc_feats.data.new(batch_size).long().zero_()
+                elif sample_max:
+                    sampleLogprobs1, it1 = torch.max(logprobs.data, 1)
+                    it1 = it1.view(-1).long()
+                    sampleLogprobs2, it2 = torch.max(logprobs.data, 1)
+                    it2 = it2.view(-1).long()
+                else:
+                    if temperature == 1.0:
+                        prob_prev1 = torch.exp(logprobs1.data).cpu()  # fetch prev distribution: shape Nx(M+1)
+                        prob_prev2 = torch.exp(logprobs2.data).cpu()  # fetch prev distribution: shape Nx(M+1)
+                    else:
+                        # scale logprobs by temperature
+                        prob_prev1 = torch.exp(torch.div(logprobs1.data, temperature)).cpu()
+                        prob_prev2 = torch.exp(torch.div(logprobs2.data, temperature)).cpu()
+
+                    it1 = torch.multinomial(prob_prev1, 1).cuda()
+                    it2 = torch.multinomial(prob_prev2, 1).cuda()
+                    sampleLogprobs1 = logprobs1.gather(1, Variable(it1, requires_grad=False))  # gather the logprobs at sampled positions
+
+                    it1 = it1.view(-1).long()  # and flatten indices for downstream processing
+                    it2 = it2.view(-1).long()  # and flatten indices for downstream processing
+
+                xt1 = self.model1.embed(Variable(it1, requires_grad=False))
+                xt2 = self.model2.embed(Variable(it2, requires_grad=False))
+
+            if t >= 2:
+                # stop when all finished
+                if t == 2:
+                    unfinished = it1 > 0
+                else:
+                    unfinished = unfinished * (it1 > 0)
+
+                it1 = it1 * unfinished.type_as(it1)
+                seq1.append(it1)  # seq[t] the input of t+2 time step
+                seqLogprobs1.append(sampleLogprobs1.view(-1))
+
+            mean_state = [(state1[i] + state2[i])/2 for i in range(2)]
+
+            state1_comm = self.Controller(state1, mean_state)
+            state2_comm = self.Controller(state2, mean_state)
+
+            output1, state1 = self.model1.core(xt1.unsqueeze(0), state1_comm)
+            output2, state2 = self.model2.core(xt2.unsqueeze(0), state2_comm)
+
+            logprobs1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))))
+            logprobs2 = F.log_softmax(self.model2.logit(self.model2.dropout(output2.squeeze(0))))
+
+            logprobs = logprobs1 + logprobs2
+
+        return torch.cat([_.unsqueeze(1) for _ in seq1], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs1], 1)
+
+
+    def sample(self, fc_feats, att_feats, opt={}):
+        sample_max = opt.get('sample_max', 1)
+        beam_size = opt.get('beam_size', 1)
+        temperature = opt.get('temperature', 1.0)
+        if beam_size > 1:
+            raise NameError, 'Fuck you baby'
+
+        batch_size = fc_feats.size(0)
+        state1 = self.model1.init_hidden(batch_size)
+
+        seq1 = []
+        seqLogprobs1 = []
+
+        for t in range(self.seq_length + 2):
+            if t == 0:
+                xt1 = self.model1.img_embed(fc_feats)
+            else:
+                if t == 1:  # input <bos>
+                    it1 = fc_feats.data.new(batch_size).long().zero_()
+                elif sample_max:
+                    sampleLogprobs1, it1 = torch.max(logprobs.data, 1)
+                    it1 = it1.view(-1).long()
+                else:
+                    if temperature == 1.0:
+                        prob_prev1 = torch.exp(logprobs1.data).cpu()  # fetch prev distribution: shape Nx(M+1)
+                    else:
+                        # scale logprobs by temperature
+                        prob_prev1 = torch.exp(torch.div(logprobs1.data, temperature)).cpu()
+
+                    it1 = torch.multinomial(prob_prev1, 1).cuda()
+                    sampleLogprobs1 = logprobs1.gather(1, Variable(it1, requires_grad=False))  # gather the logprobs at sampled positions
+                    it1 = it1.view(-1).long()  # and flatten indices for downstream processing
+
+                xt1 = self.model1.embed(Variable(it1, requires_grad=False))
+
+            if t >= 2:
+                # stop when all finished
+                if t == 2:
+                    unfinished = it1 > 0
+                else:
+                    unfinished = unfinished * (it1 > 0)
+
+                it1 = it1 * unfinished.type_as(it1)
+                seq1.append(it1)  # seq[t] the input of t+2 time step
+                seqLogprobs1.append(sampleLogprobs1.view(-1))
+
+            #mean_state = [(state1[i])/1 for i in range(2)]
+            #state1_comm = self.Controller(state1, mean_state)
+
+            mean_state = [(state1[i])/1 for i in range(2)]
+            state1_comm = self.Controller2(state1, mean_state)
+
+            output1, state1 = self.model1.core(xt1.unsqueeze(0), state1_comm)
+
+            logprobs1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))))
+            logprobs = logprobs1
+
+        return torch.cat([_.unsqueeze(1) for _ in seq1], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs1], 1)
+
+
+
 class ShowTellModel(nn.Module):
     def __init__(self, opt):
         super(ShowTellModel, self).__init__()
@@ -228,247 +488,3 @@ class ShowTellModel(nn.Module):
             logprobs = F.log_softmax(self.logit(self.dropout(output.squeeze(0))))
 
         return torch.cat([_.unsqueeze(1) for _ in seq], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs], 1)
-
-
-class Discriminator(nn.Module):
-    def __init__(self, opt):
-        super(Discriminator, self).__init__()
-        self.opt = opt
-
-        self.net_D = nn.Sequential(nn.Linear(512+512, 512),
-                                   nn.ReLU(),
-                                   nn.Linear(512, 2))
-
-        self.bi_lstm = nn.LSTM(input_size=self.opt.D_hidden_size, hidden_size=self.opt.D_hidden_size, bias=True,
-                               batch_first=True, bidirectional=True)
-
-        self.W_conv1 = nn.Sequential(nn.Conv1d(in_channels=16, out_channels=16, kernel_size=512))
-        self.W_sent_emb1 = nn.Sequential(nn.Linear(1024, 512))
-
-        self.im_embedding = nn.Sequential(nn.Linear(2048, 512),
-                                          nn.BatchNorm1d(512),
-                                          nn.ReLU())
-
-        self.conv2d_1 = nn.Conv2d(1, 64, (1, 512))
-        self.conv2d_2 = nn.Conv2d(1, 64, (3, 512))
-        self.conv2d_3 = nn.Conv2d(1, 64, (5, 512))
-
-        self.gmlp1 = nn.Linear(1024, 512)
-        self.gmlp2 = nn.Linear(512, 512)
-        self.gmlp3 = nn.Linear(512, 512)
-        self.fmlp1 = nn.Linear(512, 512)
-        self.fmlp2 = nn.Linear(512, 512)
-
-    def self_attentive_sentence_embedding(self, res_embed, fc_feats):
-        iter_batch_size = res_embed.size()[0]
-        res_embed = torch.transpose(res_embed, 0, 1)  # [16, 640, 512]
-        res_embed = res_embed[:16]  # [16, 640, 512]
-
-        bilstm_out, hn = self.bi_lstm(res_embed)  # [16, 640, 1024]
-
-        H_st_ = torch.transpose(bilstm_out, 0, 1)  # [640, 16, 1024]
-        H_st = torch.cat(H_st_, 0)  # [640x16,  1024]
-        H_st = self.W_sent_emb1(H_st)  # [640x16,  512 ]
-        H_st = H_st.view(iter_batch_size, 16, 512)  # [640, 16, 512 ]
-        # H_im = self.W_im_emb(im_input)                # [640x16, 512]
-        # H_im = H_im.repeat(16, 1, 1).transpose(0, 1)  # [640, 16, 512]
-        # H_ = torch.cat((H_st, H_im), 2)  # [640, 16, 1024]
-
-        H_ = H_st
-        H_ = self.W_conv1(H_)  # [640, 16, 512]
-        H_ = H_.squeeze(2)  # [640, 16]
-
-        attention_ = F.softmax(H_)
-        attention = attention_.unsqueeze(2)  # attention = [640, 16, 1]
-        attention = attention.repeat(1, 1, 1024)  # attention = [640, 16, 1024]
-        embedding = attention * H_st_  # embedding = [640, 16, 1024]
-        embedding = torch.sum(embedding, dim=1)  # embedding = [640, 1, 1024]
-
-        return embedding.squeeze(1)  # embedding = [640, 1024]
-
-    def conv_and_pool(self, x, conv):
-        x = F.relu(conv(x)).squeeze(3)
-        x = F.max_pool1d(x, x.size(2)).squeeze(2)
-        return x
-
-    def sentence_embedding_my(self, res_embed):
-
-        res_embed = torch.transpose(res_embed, 0, 1)     # [16, 640, 512]
-        res_embed = res_embed[:16]                       # [16, 640, 512]
-
-        #bilstm_out, hn = self.bi_lstm(res_embed)         # [16, 640, 1024]
-        bilstm_out = torch.transpose(res_embed, 0, 1)   # [640, 16, 1024]
-        bilstm_out = bilstm_out.unsqueeze(1)
-
-        x1 = self.conv_and_pool(bilstm_out, self.conv2d_1) #(N,Co)
-        x2 = self.conv_and_pool(bilstm_out, self.conv2d_2) #(N,Co)
-        x3 = self.conv_and_pool(bilstm_out, self.conv2d_3) #(N,Co)
-
-        feat = torch.cat((x1, x2, x3), 1)  # (N,len(Ks)*Co)
-
-        return feat
-
-    def relation_embedding(self, res_embed):
-
-        batch_size  = res_embed.size(0) # 640
-        seq_len     = res_embed.size(1) # 16
-
-        n_object = seq_len              # 16
-        n_object_pair = n_object * n_object # 256
-
-        feature_dim = res_embed.size()[-1]  # 512
-        out = res_embed.view(batch_size, n_object, feature_dim) # 640, 16, 512
-
-        feature1 = out.unsqueeze(1)
-        feature1 = feature1.expand(batch_size, n_object, n_object, feature_dim)
-        feature1 = feature1.contiguous().view(-1, n_object_pair, feature_dim) # 640, 256, 512
-
-        feature2 = out.unsqueeze(3)
-        feature2 = feature2.expand(batch_size, n_object, feature_dim, n_object)
-        feature2 = feature2.contiguous().view(-1, n_object_pair, feature_dim) # 640, 256, 512
-
-        feature = torch.cat([feature1, feature2], 2).view(-1, 512*2)          # 640, 256, 1024
-
-        out = F.relu(self.gmlp1(feature)) # 4, 64, 12288
-        out = F.relu(self.gmlp2(out))
-        out = F.relu(self.gmlp3(out))
-
-        # Element-wise Sum
-        out = out.view(-1, n_object_pair, 512).mean(1)
-
-        return out
-
-
-    def forward(self, input, im_input):
-        #sent_embedding = self.self_attentive_sentence_embedding(input, im_input)
-        #sent_embedding = self.sentence_embedding_my(input)
-        sent_embedding = self.relation_embedding(input)
-
-        img_embedding = self.im_embedding(im_input)
-        embedding = torch.cat((sent_embedding, img_embedding), 1)
-        out = self.net_D(embedding)
-        return out
-
-
-class Distance(nn.Module):
-    def __init__(self, opt):
-        super(Distance, self).__init__()
-        self.opt = opt
-
-        self.net_D = nn.Sequential(nn.Linear(512+512, 512),
-                                   nn.ReLU(),
-                                   nn.Linear(512, 2))
-
-        self.bi_lstm = nn.LSTM(input_size=self.opt.D_hidden_size, hidden_size=self.opt.D_hidden_size, bias=True,
-                               batch_first=True, bidirectional=True)
-
-        self.W_conv1 = nn.Sequential(nn.Conv1d(in_channels=16, out_channels=16, kernel_size=512))
-        self.W_sent_emb1 = nn.Sequential(nn.Linear(1024, 512))
-
-        self.im_embedding = nn.Sequential(nn.Linear(2048, 512),
-                                          nn.BatchNorm1d(512),
-                                          nn.ReLU())
-
-        self.conv2d_1 = nn.Conv2d(1, 64, (1, 512))
-        self.conv2d_2 = nn.Conv2d(1, 64, (3, 512))
-        self.conv2d_3 = nn.Conv2d(1, 64, (5, 512))
-
-        self.gmlp1 = nn.Linear(1024, 512)
-        self.gmlp2 = nn.Linear(512, 512)
-        self.gmlp3 = nn.Linear(512, 512)
-        self.fmlp1 = nn.Linear(512, 512)
-        self.fmlp2 = nn.Linear(512, 512)
-
-    def self_attentive_sentence_embedding(self, res_embed, fc_feats):
-        iter_batch_size = res_embed.size()[0]
-        res_embed = torch.transpose(res_embed, 0, 1)  # [16, 640, 512]
-        res_embed = res_embed[:16]  # [16, 640, 512]
-
-        bilstm_out, hn = self.bi_lstm(res_embed)  # [16, 640, 1024]
-
-        H_st_ = torch.transpose(bilstm_out, 0, 1)  # [640, 16, 1024]
-        H_st = torch.cat(H_st_, 0)  # [640x16,  1024]
-        H_st = self.W_sent_emb1(H_st)  # [640x16,  512 ]
-        H_st = H_st.view(iter_batch_size, 16, 512)  # [640, 16, 512 ]
-        # H_im = self.W_im_emb(im_input)                # [640x16, 512]
-        # H_im = H_im.repeat(16, 1, 1).transpose(0, 1)  # [640, 16, 512]
-        # H_ = torch.cat((H_st, H_im), 2)  # [640, 16, 1024]
-
-        H_ = H_st
-        H_ = self.W_conv1(H_)  # [640, 16, 512]
-        H_ = H_.squeeze(2)  # [640, 16]
-
-        attention_ = F.softmax(H_)
-        attention = attention_.unsqueeze(2)  # attention = [640, 16, 1]
-        attention = attention.repeat(1, 1, 1024)  # attention = [640, 16, 1024]
-        embedding = attention * H_st_  # embedding = [640, 16, 1024]
-        embedding = torch.sum(embedding, dim=1)  # embedding = [640, 1, 1024]
-
-        return embedding.squeeze(1)  # embedding = [640, 1024]
-
-    def conv_and_pool(self, x, conv):
-        x = F.relu(conv(x)).squeeze(3)
-        x = F.max_pool1d(x, x.size(2)).squeeze(2)
-        return x
-
-    def sentence_embedding_my(self, res_embed):
-
-        res_embed = torch.transpose(res_embed, 0, 1)     # [16, 640, 512]
-        res_embed = res_embed[:16]                       # [16, 640, 512]
-
-        #bilstm_out, hn = self.bi_lstm(res_embed)         # [16, 640, 1024]
-        bilstm_out = torch.transpose(res_embed, 0, 1)   # [640, 16, 1024]
-        bilstm_out = bilstm_out.unsqueeze(1)
-
-        x1 = self.conv_and_pool(bilstm_out, self.conv2d_1) #(N,Co)
-        x2 = self.conv_and_pool(bilstm_out, self.conv2d_2) #(N,Co)
-        x3 = self.conv_and_pool(bilstm_out, self.conv2d_3) #(N,Co)
-
-        feat = torch.cat((x1, x2, x3), 1)  # (N,len(Ks)*Co)
-
-        return feat
-
-    def relation_embedding(self, res_embed):
-
-        batch_size  = res_embed.size(0) # 640
-        seq_len     = res_embed.size(1) # 16
-
-        n_object = seq_len              # 16
-        n_object_pair = n_object * n_object # 256
-
-        feature_dim = res_embed.size()[-1]  # 512
-        out = res_embed.view(batch_size, n_object, feature_dim) # 640, 16, 512
-
-        feature1 = out.unsqueeze(1)
-        feature1 = feature1.expand(batch_size, n_object, n_object, feature_dim)
-        feature1 = feature1.contiguous().view(-1, n_object_pair, feature_dim) # 640, 256, 512
-
-        feature2 = out.unsqueeze(3)
-        feature2 = feature2.expand(batch_size, n_object, feature_dim, n_object)
-        feature2 = feature2.contiguous().view(-1, n_object_pair, feature_dim) # 640, 256, 512
-
-        feature = torch.cat([feature1, feature2], 2).view(-1, 512*2)          # 640, 256, 1024
-
-        out = F.relu(self.gmlp1(feature)) # 4, 64, 12288
-        out = F.relu(self.gmlp2(out))
-        out = F.relu(self.gmlp3(out))
-
-        # Element-wise Sum
-        #out = out.view(-1, n_object_pair, 512).mean(1)
-        out, _ = out.view(-1, n_object_pair, 512).max(1)
-
-        return out
-
-
-    def forward(self, input, im_input):
-        #sent_embedding = self.self_attentive_sentence_embedding(input, im_input)
-        #sent_embedding = self.sentence_embedding_my(input)
-        sent_embedding = self.relation_embedding(input)
-        img_embedding = self.im_embedding(im_input)
-
-        return img_embedding, sent_embedding
-
-
-def mseloss(input, target):
-    temp = torch.sum(torch.pow((input - target), 2) / input.data.shape[1])
-    return temp

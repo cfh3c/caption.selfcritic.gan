@@ -10,13 +10,13 @@ def parse_opt():
     # Data input settings
     parser.add_argument('--input_json', type=str, default='data/cocotalk.json',
                     help='path to the json file containing additional info and vocab')
-    parser.add_argument('--input_fc_dir', type=str, default='data/cocotalk_fc',
+    parser.add_argument('--input_fc_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_fc',
                     help='path to the directory containing the preprocessed fc feats')
-    parser.add_argument('--input_att_dir', type=str, default='data/cocotalk_att',
+    parser.add_argument('--input_att_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_att',
                     help='path to the directory containing the preprocessed att feats')
     parser.add_argument('--input_label_h5', type=str, default='data/cocotalk_label.h5',
                     help='path to the h5file containing the preprocessed dataset')
-    parser.add_argument('--start_from', type=str, default='save',# default='save/model_backup/showtell_2/',
+    parser.add_argument('--start_from', type=str, default=None,
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
@@ -25,7 +25,7 @@ def parse_opt():
                     """)
 
     # Model settings
-    parser.add_argument('--caption_model', type=str, default="show_tell",
+    parser.add_argument('--caption_model', type=str, default="att2in",
                     help='show_tell, show_attend_tell, all_img, fc, att2in, att2in2, adaatt, adaattmo, topdown')
     parser.add_argument('--rnn_size', type=int, default=512,
                     help='size of the rnn in number of hidden nodes in each layer')
@@ -47,15 +47,15 @@ def parse_opt():
     parser.add_argument('--D_scheduling', type=int, default=5, help='Discriminator scheduling')
 
     # Optimization: General
-    parser.add_argument('--max_epochs', type=int, default=70,
+    parser.add_argument('--max_epochs', type=int, default=30,
                     help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=128, # 128
+    parser.add_argument('--batch_size', type=int, default=8, # 128
                     help='minibatch size')
-    # parser.add_argument('--grad_clip', type=float, default=0.1, #5.,
-    #                 help='clip gradients at this value')
+    parser.add_argument('--grad_clip', type=float, default=2., #5.,
+                     help='clip gradients at this value')
     parser.add_argument('--drop_prob_lm', type=float, default=0.5,
                     help='strength of dropout in the Language Model RNN')
-    parser.add_argument('--self_critical_after', type=int, default=0,
+    parser.add_argument('--self_critical_after', type=int, default=-1,
                     help='After what epoch do we start finetuning the CNN? (-1 = disable; never finetune, 0 = finetune from start)')
     parser.add_argument('--seq_per_img', type=int, default=5,
                     help='number of captions to sample for each image during training. Done for efficiency since CNN forward pass is expensive. E.g. coco has 5 sents/image')
@@ -95,7 +95,7 @@ def parse_opt():
     # Evaluation/Checkpointing
     parser.add_argument('--val_images_use', type=int, default=-1,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
-    parser.add_argument('--save_checkpoint_every', type=int, default=100,
+    parser.add_argument('--save_checkpoint_every', type=int, default=1000,
                     help='how often to save a model checkpoint (in iterations)?')
     # parser.add_argument('--checkpoint_path', type=str, default='save',
     #                 help='directory to store checkpointed models')
@@ -112,56 +112,6 @@ def parse_opt():
                     help='an id identifying this run/job. used in cross-val and appended when writing progress files')
     parser.add_argument('--train_only', type=int, default=0,
                     help='if true then use 80k, else use 110k')
-
-    # WITH VSE
-    parser.add_argument('--vse_pretrained_path', type=str, default='save/model_VSE/model_best.pth.tar')
-    parser.add_argument('--margin', default=0.2, type=float,
-                        help='Rank loss margin.')
-    parser.add_argument('--num_epochs', default=50, type=int,
-                        help='Number of training epochs.')
-    # parser.add_argument('--batch_size', default=128, type=int,
-    #                     help='Size of a training mini-batch.')
-    parser.add_argument('--word_dim', default=300, type=int,
-                        help='Dimensionality of the word embedding.')
-    parser.add_argument('--embed_size', default=1024, type=int,
-                        help='Dimensionality of the joint embedding.')
-    parser.add_argument('--grad_clip', default=2., type=float,
-                        help='Gradient clipping threshold.')
-    parser.add_argument('--crop_size', default=224, type=int,
-                        help='Size of an image crop as the CNN input.')
-    # parser.add_argument('--num_layers', default=1, type=int,
-    #                     help='Number of GRU layers.')
-    # parser.add_argument('--learning_rate', default=.0002, type=float,
-    #                     help='Initial learning rate.')
-    parser.add_argument('--lr_update', default=15, type=int,
-                        help='Number of epochs to update the learning rate.')
-    parser.add_argument('--workers', default=10, type=int,
-                        help='Number of data loader workers.')
-    parser.add_argument('--log_step', default=10, type=int,
-                        help='Number of steps to print and record the log.')
-    parser.add_argument('--val_step', default=500, type=int,
-                        help='Number of steps to run validation.')
-    parser.add_argument('--logger_name', default='runs/runs/coco_vse++',
-                        help='Path to save the model and Tensorboard log.')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                        help='path to latest checkpoint (default: none)')
-    parser.add_argument('--max_violation', action='store_true',
-                        help='Use max instead of sum in the rank loss.')
-    parser.add_argument('--img_dim', default=2048, type=int,
-                        help='Dimensionality of the image embedding.')
-    parser.add_argument('--finetune', action='store_true',
-                        help='Fine-tune the image encoder.')
-    parser.add_argument('--cnn_type', default='vgg19',
-                        help="""The CNN used for image encoder
-                        (e.g. vgg19, resnet152)""")
-    parser.add_argument('--use_restval', action='store_true',
-                        help='Use the restval data for training on MSCOCO.')
-    parser.add_argument('--measure', default='cosine',
-                        help='Similarity measure used (cosine|order)')
-    parser.add_argument('--use_abs', action='store_true',
-                        help='Take the absolute value of embedding vectors.')
-    parser.add_argument('--no_imgnorm', action='store_true',
-                        help='Do not normalize the image embeddings.')
 
     args = parser.parse_args()
 

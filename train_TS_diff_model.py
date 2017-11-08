@@ -13,8 +13,9 @@ import eval_utils
 import misc.utils as utils
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward_forTS
+from misc.rewards import get_self_critical_reward_forTS_diff
 from models.Att2inModel import Att2inModel
+from models.ShowTellModel import ShowTellModel
 from opts import opts_withTS
 
 
@@ -57,17 +58,17 @@ def train(opt):
 
     infos = {}
     histories = {}
-    if opt.start_from is not None:
+    if opt.start_from_S is not None:
         # open old infos and check if models are compatible
-        with open(os.path.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
+        with open(os.path.join(opt.start_from_S, 'infos_'+opt.id+'.pkl')) as f:
             infos = cPickle.load(f)
             saved_model_opt = infos['opt']
             need_be_same=["caption_model", "rnn_type", "rnn_size", "num_layers"]
-            for checkme in need_be_same:
-                assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
+            #for checkme in need_be_same:
+            #    assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
 
-        if os.path.isfile(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
-            with open(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
+        if os.path.isfile(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')):
+            with open(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
 
     iteration = infos.get('iter', 0)
@@ -84,18 +85,17 @@ def train(opt):
         best_val_score = infos.get('best_val_score', None)
 
     modelT = Att2inModel(opt)
-    if vars(opt).get('start_from', None) is not None:
-        assert os.path.isdir(opt.start_from), " %s must be a a path" % opt.start_from
-        assert os.path.isfile(os.path.join(opt.start_from, "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from
-        modelT.load_state_dict(torch.load(os.path.join(opt.start_from, 'model.pth')))
+    if vars(opt).get('start_from_T', None) is not None:
+        assert os.path.isdir(opt.start_from_T), " %s must be a path" % opt.start_from_T
+        assert os.path.isfile(os.path.join(opt.start_from_T, "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from_T
+        modelT.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
         modelT.cuda()
 
-    modelS = Att2inModel(opt)
-    if vars(opt).get('start_from', None) is not None:
-        assert os.path.isdir(opt.start_from), " %s must be a a path" % opt.start_from
-        assert os.path.isfile(os.path.join(opt.start_from,
-                                           "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from
-        modelS.load_state_dict(torch.load(os.path.join(opt.start_from, 'model.pth')))
+    modelS = ShowTellModel(opt)
+    if vars(opt).get('start_from_S', None) is not None:
+        assert os.path.isdir(opt.start_from_S), " %s must be a path" % opt.start_from_S
+        assert os.path.isfile(os.path.join(opt.start_from_S, "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from_S
+        modelS.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
         modelS.cuda()
 
     logger = Logger(opt)
@@ -112,8 +112,8 @@ def train(opt):
     optimizer_T = optim.Adam(modelT.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
-    if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer_S.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+    if vars(opt).get('start_from_S', None) is not None and os.path.isfile(os.path.join(opt.start_from_S,"optimizer.pth")):
+        optimizer_S.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'optimizer.pth')))
 
     while True:
         if update_lr_flag:
@@ -137,10 +137,10 @@ def train(opt):
             loss.backward()
         else:
             gen_result_S, sample_logprobs_S = modelS.sample(fc_feats, att_feats, {'sample_max': 0})
-            reward_S = get_self_critical_reward_forTS(modelT, modelS, fc_feats, att_feats, data, gen_result_S, logger)
+            reward_S = get_self_critical_reward_forTS_diff(modelT, modelS, fc_feats, att_feats, data, gen_result_S, logger)
 
             gen_result_T, sample_logprobs_T = modelT.sample(fc_feats, att_feats, {'sample_max': 0})
-            reward_T = get_self_critical_reward_forTS(modelS, modelT, fc_feats, att_feats, data, gen_result_T, logger)
+            reward_T = get_self_critical_reward_forTS_diff(modelS, modelT, fc_feats, att_feats, data, gen_result_T, logger)
 
             loss_S = rl_crit(sample_logprobs_S, gen_result_S, Variable(torch.from_numpy(reward_S).float().cuda(), requires_grad=False))
             loss_T = rl_crit(sample_logprobs_T, gen_result_T, Variable(torch.from_numpy(reward_T).float().cuda(), requires_grad=False))
@@ -149,7 +149,6 @@ def train(opt):
             loss_T.backward()
 
             loss = loss_S + loss_T
-            #reward = reward_S + reward_T
 
         utils.clip_gradient(optimizer_S, opt.grad_clip)
         utils.clip_gradient(optimizer_T, opt.grad_clip)
@@ -262,6 +261,6 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-torch.cuda.set_device(1)
+torch.cuda.set_device(0)
 opt = opts_withTS.parse_opt()
 train(opt)

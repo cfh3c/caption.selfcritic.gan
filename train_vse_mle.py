@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import time
 
+import tensorflow as tf
 import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
@@ -11,13 +12,12 @@ from torch.autograd import Variable
 import eval_utils
 import misc.utils as utils
 import models
-import opts_withVSE
 from dataloader import *
 from logger import Logger
-
-import tensorflow as tf
-from models.VSE import VSE
 from models.ShowTellModel_vsemle import ContrastiveLoss
+from models.VSE import VSE
+from opts import opts_withVSE
+
 
 def update_lr(opt, epoch, model, optimizer_G):
 

@@ -16,6 +16,7 @@ import os
 import sys
 import misc.utils as utils
 
+
 def language_eval(dataset, preds, model_id, split):
     import sys
     sys.path.append("coco-caption")
@@ -35,7 +36,7 @@ def language_eval(dataset, preds, model_id, split):
     # filter results to only those in MSCOCO validation set (will be about a third)
     preds_filt = [p for p in preds if p['image_id'] in valids]
     print('using %d/%d predictions' % (len(preds_filt), len(preds)))
-    json.dump(preds_filt, open(cache_path, 'w')) # serialize to temporary json file. Sigh, COCO API...
+    json.dump(preds_filt, open(cache_path, 'w'))  # serialize to temporary json file. Sigh, COCO API...
 
     cocoRes = coco.loadRes(cache_path)
     cocoEval = COCOEvalCap(coco, cocoRes)
@@ -55,6 +56,7 @@ def language_eval(dataset, preds, model_id, split):
         json.dump({'overall': out, 'imgToEval': imgToEval}, outfile)
 
     return out
+
 
 def eval_split(model, crit, loader, logger, eval_kwargs={}):
     verbose = eval_kwargs.get('verbose', True)
@@ -81,15 +83,13 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
         if data.get('labels', None) is not None:
             # forward the model to get loss
             tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
-            #tmp = [data['fc_feats'], data['labels'], data['masks']]
+            # tmp = [data['fc_feats'], data['labels'], data['masks']]
             tmp = [Variable(torch.from_numpy(_), volatile=True).cuda() for _ in tmp]
             fc_feats, att_feats, labels, masks = tmp
-            #fc_feats, att_feats, labels, masks = tmp
-            #fc_feats, labels, masks = tmp
 
-            loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:]).data[0]
-            #loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:]).data[0]
-            #loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:]).data[0]
+            out1, out2 = model(fc_feats, att_feats, labels)
+            loss_1, loss_2 = crit(out1, labels[:, 1:], masks[:, 1:]), crit(out2, labels[:, 1:], masks[:, 1:])
+            loss = loss_1 + loss_2
 
             loss_sum = loss_sum + loss
             loss_evals = loss_evals + 1
@@ -97,15 +97,15 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
         # forward the model to also get generated samples for each image
         # Only leave one feature for each image, in case duplicate sample
         tmp = [data['fc_feats'][np.arange(loader.batch_size) * loader.seq_per_img],
-            data['att_feats'][np.arange(loader.batch_size) * loader.seq_per_img]]
+               data['att_feats'][np.arange(loader.batch_size) * loader.seq_per_img]]
         tmp = [Variable(torch.from_numpy(_), volatile=True).cuda() for _ in tmp]
         fc_feats, att_feats = tmp
-        #fc_feat = tmp[0]
+        # fc_feat = tmp[0]
         # forward the model to also get generated samples for each image
         seq, _ = model.sample(fc_feats, att_feats, eval_kwargs)
-        #seq, _ = model.sample(fc_feats, eval_kwargs)
-        
-        #set_trace()
+        # seq, _ = model.sample(fc_feats, eval_kwargs)
+
+        # set_trace()
         sents = utils.decode_sequence(loader.get_vocab(), seq)
 
         for k, sent in enumerate(sents):
@@ -115,12 +115,14 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
             predictions.append(entry)
             if eval_kwargs.get('dump_images', 0) == 1:
                 # dump the raw image to vis/ folder
-                cmd = 'cp "' + os.path.join(eval_kwargs['image_root'], data['infos'][k]['file_path']) + '" vis/imgs/img' + str(len(predictions)) + '.jpg' # bit gross
+                cmd = 'cp "' + os.path.join(eval_kwargs['image_root'],
+                                            data['infos'][k]['file_path']) + '" vis/imgs/img' + str(
+                    len(predictions)) + '.jpg'  # bit gross
                 os.system(cmd)
                 logger.write(cmd)
 
             if verbose:
-                log = 'image %s: %s' %(entry['image_id'], entry['caption'])
+                log = 'image %s: %s' % (entry['image_id'], entry['caption'])
                 logger.write(log)
 
         # if we wrapped around the split or used up val imgs budget then bail
@@ -132,7 +134,7 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
             predictions.pop()
 
         if verbose:
-            log='evaluating validation preformance... %d/%d (%f)' %(ix0 - 1, ix1, loss)
+            log = 'evaluating validation preformance... %d/%d (%f)' % (ix0 - 1, ix1, loss)
             logger.write(log)
 
         if data['bounds']['wrapped']:
@@ -146,4 +148,4 @@ def eval_split(model, crit, loader, logger, eval_kwargs={}):
 
     # Switch back to training mode
     model.train()
-    return loss_sum/loss_evals, predictions, lang_stats
+    return loss_sum / loss_evals, predictions, lang_stats

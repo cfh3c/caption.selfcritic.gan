@@ -2,17 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import torch
+from collections import deque
+
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import *
-import misc.utils as utils
 from torch import optim
-import time
-from six.moves import cPickle
+from torch.autograd import *
+
 from models.ShowTellModel import ShowTellModel, Discriminator, Distance
-from collections import deque
 
 
 class Discriminator_trainer():
@@ -286,7 +283,7 @@ class Euclidean_trainer():
 
 
 if __name__ == "__main__":
-    import opts
+    from opts import opts
     from dataloader import *
 
     opt = opts.parse_opt()

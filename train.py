@@ -2,25 +2,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-import torch.optim as optim
-
-import numpy as np
-
 import time
-import os
-from six.moves import cPickle
 
-import opts
-import models
-from models.ShowTellModel import Discriminator, Distance
-from dataloader import *
+import torch.nn as nn
+import torch.optim as optim
+from six.moves import cPickle
+from torch.autograd import Variable
+
 import eval_utils
 import misc.utils as utils
-from misc.rewards import get_self_critical_reward, get_gan_reward, get_distance_reward
+import models
+from dataloader import *
 from logger import Logger
+from misc.rewards import get_self_critical_reward, get_distance_reward
+from models.ShowTellModel import Distance
+from opts import opts
 
 try:
     import tensorflow as tf

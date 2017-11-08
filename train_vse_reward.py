@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import time
 
+import tensorflow as tf
 import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
@@ -11,14 +12,11 @@ from torch.autograd import Variable
 import eval_utils
 import misc.utils as utils
 import models
-import opts_withVSE
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward, get_reward_test
+from misc.rewards import get_self_critical_reward
+from opts import opts_withVSE
 
-import tensorflow as tf
-from models.VSE import VSE
-from misc.rewards_vse import get_currscore_reward, reordering_data, get_sim_reward
 
 def update_lr(opt, epoch, model, optimizer_G):
 
@@ -88,14 +86,14 @@ def train(opt):
     model = models.setup(opt)
     model.cuda()
 
-    model_VSE = VSE(opt)
+    #model_VSE = VSE(opt)
 
     #print("=> loading checkpoint '{}'".format(opt.vse_pretrained_path))
     #checkpoint = torch.load(opt.vse_pretrained_path)
     #start_epoch = checkpoint['epoch']
     #best_rsum = checkpoint['best_rsum']
     #model_VSE.load_state_dict(checkpoint['model'])
-    model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
+    #model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
     print("=> loaded preterained vse model done.")
     #validate(opt, data_loader, model)
 
@@ -124,21 +122,21 @@ def train(opt):
         torch.cuda.synchronize()
         start = time.time()
 
-        tmp = [data['fc_feats'], data['labels'], data['masks']]
+        tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
-        fc_feats, labels, masks = tmp
+        fc_feats, att_feats, labels, masks = tmp
 
         optimizer_G.zero_grad()
         if not sc_flag:
             loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
             loss.backward()
         else:
-            gen_result, sample_logprobs = model.sample(fc_feats, {'sample_max':0})
-            #sc_reward = get_self_critical_reward(model, fc_feats, data, gen_result, logger)
+            gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
+            sc_reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result, logger)
             #test = get_reward_test(model, fc_feats, data, gen_result, logger)
             #curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
-            sim_reward = get_sim_reward(model, model_VSE, fc_feats, gen_result, logger)
-            reward = sim_reward
+            #sim_reward = get_sim_reward(model, model_VSE, fc_feats, gen_result, logger)
+            reward = sc_reward
 
             #loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
             #loss2.backward()
@@ -250,5 +248,6 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
+torch.cuda.set_device(0)
 opt = opts_withVSE.parse_opt()
 train(opt)

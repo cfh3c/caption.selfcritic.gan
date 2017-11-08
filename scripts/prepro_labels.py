@@ -181,9 +181,9 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
 
   # input json
-  parser.add_argument('--input_json', required=True, help='input json file to process into hdf5')
-  parser.add_argument('--output_json', default='data.json', help='output json file')
-  parser.add_argument('--output_h5', default='data', help='output h5 file')
+  parser.add_argument('--input_json', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/dataset_coco.json', help='input json file to process into hdf5')
+  parser.add_argument('--output_json', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/cocotalk.json', help='output json file')
+  parser.add_argument('--output_h5', default='/home/vdo-gt/_code/caption.selfcritic.gan/data/cocotalk', help='output h5 file')
 
   # options
   parser.add_argument('--max_length', default=16, type=int, help='max length of a caption, in number of words. captions longer than this get clipped.')

@@ -11,11 +11,10 @@ from torch.autograd import Variable
 
 import eval_utils
 import misc.utils as utils
+import models
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward_forTS
-from models.Att2inModel import Att2inModel
-from opts import opts_withTS
+from opts import opts_for_pretrain
 
 
 def update_lr(opt, epoch, model, optimizer_G):
@@ -83,42 +82,26 @@ def train(opt):
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
 
-    modelT = Att2inModel(opt)
-    if vars(opt).get('start_from', None) is not None:
-        assert os.path.isdir(opt.start_from), " %s must be a a path" % opt.start_from
-        assert os.path.isfile(os.path.join(opt.start_from, "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from
-        modelT.load_state_dict(torch.load(os.path.join(opt.start_from, 'model.pth')))
-        modelT.cuda()
-
-    modelS = Att2inModel(opt)
-    if vars(opt).get('start_from', None) is not None:
-        assert os.path.isdir(opt.start_from), " %s must be a a path" % opt.start_from
-        assert os.path.isfile(os.path.join(opt.start_from,
-                                           "infos_" + opt.id + ".pkl")), "infos.pkl file does not exist in path %s" % opt.start_from
-        modelS.load_state_dict(torch.load(os.path.join(opt.start_from, 'model.pth')))
-        modelS.cuda()
+    model = models.setup(opt)
+    model.cuda()
 
     logger = Logger(opt)
 
     update_lr_flag = True
     # Assure in training mode
-    modelT.train()
-    modelS.train()
+    model.train()
 
     crit = utils.LanguageModelCriterion()
-    rl_crit = utils.RewardCriterion()
 
-    optimizer_S = optim.Adam(modelS.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-    optimizer_T = optim.Adam(modelT.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
     if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer_S.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+        optimizer_G.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
 
     while True:
         if update_lr_flag:
-            opt, sc_flag, update_lr_flag, modelS, optimizer_S = update_lr(opt, epoch, modelS, optimizer_S)
-            opt, sc_flag, update_lr_flag, modelT, optimizer_T = update_lr(opt, epoch, modelT, optimizer_T)
+            opt, sc_flag, update_lr_flag, model, optimizer_G = update_lr(opt, epoch, model, optimizer_G)
 
         # Load data from train split (0)
         data = loader.get_batch('train', seq_per_img=opt.seq_per_img)
@@ -130,44 +113,22 @@ def train(opt):
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
         fc_feats, att_feats, labels, masks = tmp
 
-        optimizer_S.zero_grad()
-        optimizer_T.zero_grad()
+        optimizer_G.zero_grad()
         if not sc_flag:
-            loss = crit(modelS(fc_feats, labels), labels[:,1:], masks[:,1:])
+            loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
             loss.backward()
         else:
-            gen_result_S, sample_logprobs_S = modelS.sample(fc_feats, att_feats, {'sample_max': 0})
-            reward_S = get_self_critical_reward_forTS(modelT, modelS, fc_feats, att_feats, data, gen_result_S, logger)
+            pass
 
-            gen_result_T, sample_logprobs_T = modelT.sample(fc_feats, att_feats, {'sample_max': 0})
-            reward_T = get_self_critical_reward_forTS(modelS, modelT, fc_feats, att_feats, data, gen_result_T, logger)
-
-            loss_S = rl_crit(sample_logprobs_S, gen_result_S, Variable(torch.from_numpy(reward_S).float().cuda(), requires_grad=False))
-            loss_T = rl_crit(sample_logprobs_T, gen_result_T, Variable(torch.from_numpy(reward_T).float().cuda(), requires_grad=False))
-
-            loss_S.backward()
-            loss_T.backward()
-
-            loss = loss_S + loss_T
-            #reward = reward_S + reward_T
-
-        utils.clip_gradient(optimizer_S, opt.grad_clip)
-        utils.clip_gradient(optimizer_T, opt.grad_clip)
-        optimizer_S.step()
-        optimizer_T.step()
+        utils.clip_gradient(optimizer_G, opt.grad_clip)
+        optimizer_G.step()
         train_loss = loss.data[0]
-
         torch.cuda.synchronize()
         end = time.time()
 
-        if not sc_flag:
-            log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, train_loss, end - start)
-            logger.write(log)
-        else:
-            log = "iter {} (epoch {}), S_avg_reward = {:.3f}, T_avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration,  epoch, np.mean(reward_S[:,0]), np.mean(reward_T[:,0]), end - start)
-            logger.write(log)
+        log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, loss.data.cpu().numpy()[0], end - start)
+        logger.write(log)
 
         # Update the iteration and epoch
         iteration += 1
@@ -180,15 +141,12 @@ def train(opt):
             if tf is not None:
                 add_summary_value(tf_summary_writer, 'train_loss', train_loss, iteration)
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
-                add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', modelS.ss_prob, iteration)
-                if sc_flag:
-                    add_summary_value(tf_summary_writer, 'avg_reward_S', np.mean(reward_S[:,0]), iteration)
-                    add_summary_value(tf_summary_writer, 'avg_reward_T', np.mean(reward_T[:,0]), iteration)
+                add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward_S[:,0]+reward_T[:,0])
+            loss_history[iteration] = train_loss
             lr_history[iteration] = opt.current_lr
-            ss_prob_history[iteration] = modelS.ss_prob
+            ss_prob_history[iteration] = model.ss_prob
 
         # make evaluation on validation set, and save model
         if (iteration % opt.save_checkpoint_every == 0):
@@ -197,7 +155,7 @@ def train(opt):
                             'dataset': opt.input_json}
             eval_kwargs.update(vars(opt))
 
-            val_loss, predictions, lang_stats = eval_utils.eval_split(modelS, crit, loader, logger, eval_kwargs)
+            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, logger, eval_kwargs)
             logger.write_dict(lang_stats)
 
             # Write validation result into summary
@@ -219,16 +177,11 @@ def train(opt):
                 if best_val_score is None or current_score > best_val_score:
                     best_val_score = current_score
                     best_flag = True
-                checkpoint_path = os.path.join(opt.checkpoint_path, 'modelS.pth')
-                torch.save(modelS.state_dict(), checkpoint_path)
-                print("modelS saved to {}".format(checkpoint_path))
-                checkpoint_path = os.path.join(opt.checkpoint_path, 'modelT.pth')
-                torch.save(modelS.state_dict(), checkpoint_path)
-                print("modelT saved to {}".format(checkpoint_path))
-                optimizer_path = os.path.join(opt.checkpoint_path, 'S_optimizer.pth')
-                torch.save(optimizer_S.state_dict(), optimizer_path)
-                optimizer_path = os.path.join(opt.checkpoint_path, 'T_optimizer.pth')
-                torch.save(optimizer_T.state_dict(), optimizer_path)
+                checkpoint_path = os.path.join(opt.checkpoint_path, 'model.pth')
+                torch.save(model.state_dict(), checkpoint_path)
+                print("model saved to {}".format(checkpoint_path))
+                optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer.pth')
+                torch.save(optimizer_G.state_dict(), optimizer_path)
 
                 # Dump miscalleous informations
                 infos['iter'] = iteration
@@ -249,12 +202,9 @@ def train(opt):
                     cPickle.dump(histories, f)
 
                 if best_flag:
-                    checkpoint_path = os.path.join(opt.checkpoint_path, 'modelS-best.pth')
-                    torch.save(modelS.state_dict(), checkpoint_path)
-                    print("modelS saved to {}".format(checkpoint_path))
-                    checkpoint_path = os.path.join(opt.checkpoint_path, 'modelT-best.pth')
-                    torch.save(modelT.state_dict(), checkpoint_path)
-                    print("modelT saved to {}".format(checkpoint_path))
+                    checkpoint_path = os.path.join(opt.checkpoint_path, 'model-best.pth')
+                    torch.save(model.state_dict(), checkpoint_path)
+                    print("model saved to {}".format(checkpoint_path))
                     with open(os.path.join(opt.checkpoint_path, 'infos_'+opt.id+'-best.pkl'), 'wb') as f:
                         cPickle.dump(infos, f)
 
@@ -262,6 +212,6 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-torch.cuda.set_device(1)
-opt = opts_withTS.parse_opt()
+
+opt = opts_for_pretrain.parse_opt()
 train(opt)

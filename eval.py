@@ -2,21 +2,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import json
-import numpy as np
+import argparse
 
-import time
-import os
+import torch
 from six.moves import cPickle
 
-import opts
+import eval_utils
+import misc.utils as utils
 import models
 from dataloader import *
 from dataloaderraw import *
-import eval_utils
-import argparse
-import misc.utils as utils
-import torch
 
 # Input arguments and options
 parser = argparse.ArgumentParser()
