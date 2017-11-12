@@ -50,7 +50,7 @@ def parse_opt():
                     help='2048 for resnet, 512 for vgg')
 
     # Optimization: General
-    parser.add_argument('--max_epochs', type=int, default=70,
+    parser.add_argument('--max_epochs', type=int, default=40,
                     help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=128, # 128
                     help='minibatch size')
@@ -98,7 +98,7 @@ def parse_opt():
     # Evaluation/Checkpointing
     parser.add_argument('--val_images_use', type=int, default=-1,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
-    parser.add_argument('--save_checkpoint_every', type=int, default=200,
+    parser.add_argument('--save_checkpoint_every', type=int, default=100,
                     help='how often to save a model checkpoint (in iterations)?')
     parser.add_argument('--checkpoint_path', type=str, default='experiment/%s' % datetime.today().strftime('%Y%m%d_%H%M%S'))
     parser.add_argument('--language_eval', type=int, default=1,

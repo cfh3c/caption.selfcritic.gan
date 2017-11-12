@@ -27,16 +27,16 @@ def get_currscore_reward(model_G, model_VSE, fc_feats, gen_result, logger):
     #sample_res, sample_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 0})  # 640, 16
     greedy_res, greedy_logprobs = model_G.sample(Variable(fc_feats.data, volatile=True), {'sample_max': 1})  # 640, 16
 
-    rewards_sample, sample_masks = validate_curr(model_VSE, fc_feats, gen_result)
-    rewards_greedy, greedy_masks = validate_curr(model_VSE, fc_feats, greedy_res)
+    rewards_sample_, sample_masks_ = validate_curr(model_VSE, fc_feats, gen_result)
+    rewards_greedy_, greedy_masks_ = validate_curr(model_VSE, fc_feats, greedy_res)
 
-    rewards = -(rewards_sample - rewards_greedy) + 0.0
-    log = 'currscore mean rewards: %f' % rewards.mean()
-    logger.write(log)
+    #rewards = -(rewards_sample_ - rewards_greedy_) + 0.0
+    #log = 'currscore mean rewards: %f' % rewards.mean()
+    #logger.write(log)
 
-    rewards_sample = np.repeat(rewards_sample[:, np.newaxis], sample_masks.shape[1], 1)
+    #rewards_sample = np.repeat(rewards_sample_[:, np.newaxis], sample_masks_.shape[1], 1)
     #rewards_sample = rewards_sample * sample_masks
-    rewards_greedy = np.repeat(rewards_greedy[:, np.newaxis], greedy_masks.shape[1], 1)
+    #rewards_greedy = np.repeat(rewards_greedy_[:, np.newaxis], greedy_masks_.shape[1], 1)
     #rewards_greedy = rewards_greedy * greedy_masks
 
     #rewards = -(rewards_sample - rewards_greedy)
@@ -50,9 +50,18 @@ def get_currscore_reward(model_G, model_VSE, fc_feats, gen_result, logger):
     #rewards = rewards * decay
 
     # LOG REWARD
-    rewards_sample = 1/(1+np.exp(-np.log(rewards_sample + 1e-8)))
-    rewards_greedy = 1/(1+np.exp(-np.log(rewards_greedy + 1e-8)))
-    rewards = -(rewards_sample - rewards_greedy)
+    #rewards_sample = 1/(1+np.exp(-np.log(rewards_sample + 1e-8)))
+    #rewards_greedy = 1/(1+np.exp(-np.log(rewards_greedy + 1e-8)))
+    #rewards = -(rewards_sample - rewards_greedy)
+
+    # REWARD THRESHOLD
+    rewards = -(rewards_sample_ - rewards_greedy_)
+    for i in xrange(len(rewards)):
+        if rewards_sample_[i] <= 0.05:
+            rewards[i] = 0.0
+    log = 'currscore mean rewards: %f' % rewards.mean()
+    logger.write(log)
+    rewards = np.repeat(rewards[:, np.newaxis], sample_masks_.shape[1], 1)
 
     return rewards
 
@@ -463,6 +472,7 @@ def validate_curr(model, fc_feats, gen_result, data_loader=None):
     rewards = t2i_rewards + i2t_rewards
     #reward_bl = np.mean(rewards)
 
+    #threshold
     return rewards, masks#, reward_bl #currscore, masks
 
 

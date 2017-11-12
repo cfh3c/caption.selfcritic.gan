@@ -13,9 +13,9 @@ import time
 from six.moves import cPickle
 
 
-class FNetModel(nn.Module):
+class SeriNetModel(nn.Module):
     def __init__(self, opt, model1, model2):
-        super(FNetModel, self).__init__()
+        super(SeriNetModel, self).__init__()
         self.opt = opt
 
         self.model1 = model1
@@ -203,6 +203,7 @@ class FNetModel(nn.Module):
 
             if self.use_extra_info:
                 state2 = ((state2[0] + extra_info[0])/2, (state2[1] + extra_info[1])/2)
+
             output2, state2 = self.model2.core(xt2.unsqueeze(0), state2)
             logprobs2 = F.log_softmax(self.model2.logit(self.model2.dropout(output2.squeeze(0))))
 
@@ -221,8 +222,8 @@ class FNetModel(nn.Module):
         temps1 = list()
         temps2 = list()
         for idx, s in enumerate(seq):
-            for i in range(seq_length):
-                if i == 0 or s[-i] == 0:
+            for i in range(1, seq_length+1):
+                if s[-i] == 0 and i != seq_length:
                     continue
                 else:
                     if mode == 'train':
@@ -233,6 +234,10 @@ class FNetModel(nn.Module):
                         temps2.append(states1[-i][1][0][idx].unsqueeze(0))
                     else:
                         raise NameError, 'check the mode plz, train or sample..'
+
+                    if not len(temps1) == idx +1:
+                         print('whatthefuck')
+
                     break
         temp1 = torch.cat(temps1, dim=0)
         temp2 = torch.cat(temps2, dim=0)
