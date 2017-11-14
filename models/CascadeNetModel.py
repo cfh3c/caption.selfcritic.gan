@@ -55,7 +55,8 @@ class CascadeNetModel(nn.Module):
                 xt1 = self.model1.embed(it1)
 
             output1, state1 = self.model1.core(xt1.unsqueeze(0), state1)
-            states1.append(state1)
+            states1.append((state1[0].detach(), state1[1].detach()))
+            #states1.append(state1)
             output1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))), dim=1)
             outputs1.append(output1)
 
@@ -88,7 +89,7 @@ class CascadeNetModel(nn.Module):
 
             xt = self.model2.embed(it)
 
-            output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2, (states1[i+1][0].detach(), states1[i+1][1].detach()))
+            output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2, (states1[i+1][0], states1[i+1][1]))
             output2 = F.log_softmax(self.model2.logit(output2))
             outputs2.append(output2)
 
@@ -145,7 +146,7 @@ class CascadeNetModel(nn.Module):
                 seqLogprobs1.append(sampleLogprobs1.view(-1))
 
             output1, state1 = self.model1.core(xt1.unsqueeze(0), state1)
-            states1.append(state1)
+            states1.append((state1[0].detach(), state1[1].detach()))
             logprobs1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))))
 
         #seq_ = [s.unsqueeze(0) for s in seq1]
@@ -188,7 +189,7 @@ class CascadeNetModel(nn.Module):
 
                 seqLogprobs2.append(sampleLogprobs2.view(-1))
 
-            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0].detach(), states1[t+1][1].detach()))
+            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0], states1[t+1][1]))
             logprobs2 = F.log_softmax(self.model2.logit(output2))
 
         if mode == 'sc':
