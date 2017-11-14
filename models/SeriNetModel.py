@@ -164,7 +164,9 @@ class SeriNetModel(nn.Module):
         seq_ = Variable(torch.transpose(seq_, 0, 1)).cuda()
         state2 = self.pick_final_state(states1, seq_, mode='sample')
 
-        extra_info = [st for st in state2]
+        #extra_info = [st for st in state2]
+        extra_info = [st.detach() for st in state2]
+
         extra_info = [F.sigmoid(self.channel1(extra_info[0])), F.sigmoid(self.channel2(extra_info[1]))]
         extra_info = tuple(extra_info)
 
@@ -241,7 +243,8 @@ class SeriNetModel(nn.Module):
                     break
         temp1 = torch.cat(temps1, dim=0)
         temp2 = torch.cat(temps2, dim=0)
-        temp = (temp1.unsqueeze(0), temp2.unsqueeze(0))
+        #temp = (temp1.unsqueeze(0), temp2.unsqueeze(0))
+        temp = (temp1.unsqueeze(0).detach(), temp2.unsqueeze(0).detach())
 
         return temp
 

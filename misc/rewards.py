@@ -439,7 +439,7 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
     scores_greedy = scores[batch_size*2:batch_size*3]
     scores_greedy_2 = scores[batch_size*3:]
 
-    #scores_2 = scores_sample_2 - scores_greedy_2
+    #scores_2 = scores_sample_2 - scores_greedy
     scores_2 = scores_sample_2 - (scores_greedy+scores_greedy_2)/2
 
     rewards_2 = np.repeat(scores_2[:, np.newaxis], gen_result_2.shape[1], 1)
