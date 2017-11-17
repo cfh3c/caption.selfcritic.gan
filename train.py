@@ -9,9 +9,9 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils
 import misc.utils as utils
 import models
+from Eval_utils import eval_utils
 from dataloader import *
 from logger import Logger
 from misc.rewards import get_self_critical_reward, get_distance_reward

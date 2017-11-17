@@ -9,13 +9,14 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils_for_FNet
 import misc.utils as utils
+import models
+from Eval_utils import eval_utils
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward_forSeriNet
-from models.SeriNetModel import SeriNetModel, ShowTellModel
-from opts import opts_withSeriNet
+from misc.rewards_vse import get_currscore_reward
+from models.VSE import VSE
+from opts import opts_withVSE
 
 
 def update_lr(opt, epoch, model, optimizer_G):
@@ -57,11 +58,17 @@ def train(opt):
 
     infos = {}
     histories = {}
-    if opt.start_from_S is not None:
-        with open(os.path.join(opt.start_from_S, 'infos_'+opt.id+'.pkl')) as f: # for continue training
+    if opt.start_from is not None:
+        # open old infos and check if models are compatible
+        with open(os.path.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
             infos = cPickle.load(f)
-        if os.path.isfile(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')):
-            with open(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')) as f:
+            saved_model_opt = infos['opt']
+            need_be_same=["caption_model", "rnn_type", "rnn_size", "num_layers"]
+            for checkme in need_be_same:
+                assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
+
+        if os.path.isfile(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
+            with open(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
 
     iteration = infos.get('iter', 0)
@@ -77,32 +84,38 @@ def train(opt):
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
 
-    # Set CommNetModel
-    model1 = ShowTellModel(opt)
-    model2 = ShowTellModel(opt)
-    #model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
-    #model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
-    model1.cuda()
-    model2.cuda()
-
-    model = SeriNetModel(opt, model1, model2)
-    model.load_state_dict(torch.load('/home/vdo-gt/_code/caption.selfcritic.gan/experiment/20171113_170707/model.pth'))
+    model = models.setup(opt)
     model.cuda()
+
+    model_VSE = VSE(opt)
+
+    print("=> loading checkpoint '{}'".format(opt.vse_pretrained_path))
+    checkpoint = torch.load(opt.vse_pretrained_path)
+    #start_epoch = checkpoint['epoch']
+    #best_rsum = checkpoint['best_rsum']
+    model_VSE.load_state_dict(checkpoint['model'])
+    model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
+    print("=> loaded preterained vse model done.")
+    #validate(opt, data_loader, model)
+
     logger = Logger(opt)
 
     update_lr_flag = True
+    # Assure in training mode
     model.train()
 
     crit = utils.LanguageModelCriterion()
     rl_crit = utils.RewardCriterion()
 
-    optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-    #model2_parameter = list(model.parameters())
-    #optimizer_T = optim.Adam(model2_parameter, lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+
+    # Load the optimizer
+    if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
+        optimizer_G.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
 
     while True:
         if update_lr_flag:
-            opt, sc_flag, update_lr_flag, model, optimizer = update_lr(opt, epoch, model, optimizer)
+            opt, sc_flag, update_lr_flag, model, optimizer_G = update_lr(opt, epoch, model, optimizer_G)
 
         # Load data from train split (0)
         data = loader.get_batch('train', seq_per_img=opt.seq_per_img)
@@ -114,46 +127,45 @@ def train(opt):
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
         fc_feats, att_feats, labels, masks = tmp
 
-        optimizer.zero_grad()
-
+        optimizer_G.zero_grad()
         if not sc_flag:
-            out1, out2 = model(fc_feats, att_feats, labels)
-            loss_1, loss_2 = crit(out1, labels[:,1:], masks[:,1:]), crit(out2, labels[:,1:], masks[:,1:])
-            loss_1.backward(retain_graph=True)
-            loss_2.backward(retain_graph=True)
-            loss = loss_1 + loss_2
+            loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
+            loss.backward()
         else:
-            #out1, out2 = model(fc_feats, att_feats, labels)
-            #loss_1 = crit(out1, labels[:,1:], masks[:,1:])
-            #loss_1.backward(retain_graph=True)
+            loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
+            loss.backward(retain_graph=True)
 
-            #optimizer.step() dda ro?
+            gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
+            #sc_reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result, logger)
+            #test = get_reward_test(model, fc_feats, data, gen_result, logger)
+            curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
+            #sim_reward = get_sim_reward(model, model_VSE, fc_feats, gen_result, logger)
+            reward = curr_reward
 
-            gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
-            reward_2 = get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
+            #loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
+            #loss2.backward()
+            #reward = np.ones((10,10))
 
-            loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
-            loss_2.backward(retain_graph=True)
+            loss1 = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
+            loss1.backward()
 
-            #loss = loss_1 + loss_2
-            loss = loss_2
+            loss = loss1
 
-        #utils.clip_gradient(optimizer, opt.grad_clip)
-        optimizer.step()
-
+        utils.clip_gradient(optimizer_G, opt.grad_clip)
+        optimizer_G.step()
         train_loss = loss.data[0]
         torch.cuda.synchronize()
         end = time.time()
 
         if not sc_flag:
-            log = "iter {} (epoch {}), loss_1 = {:.3f}, loss_2 = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, loss_1.data[0], loss_2.data[0], end - start)
+            log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
         else:
-            #log = "iter {} (epoch {}), loss_1(mle) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
-            #    .format(iteration,  epoch, loss_1.data[0], np.mean(reward_2[:,0]), end - start)
-            log = "iter {} (epoch {}), loss = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
-               .format(iteration,  epoch, loss.data[0], np.mean(reward_2[:,0]), end - start)
+            log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
+            #log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+            #    .format(iteration, epoch, train_loss, end - start)
             logger.write(log)
 
         # Update the iteration and epoch
@@ -169,20 +181,21 @@ def train(opt):
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
                 add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
                 if sc_flag:
-                    add_summary_value(tf_summary_writer, 'avg_reward', np.mean(reward_2[:,0]), iteration)
+                    add_summary_value(tf_summary_writer, 'avg_reward', np.mean(reward[:,0]), iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward_2[:,0])
+            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward[:,0])
             lr_history[iteration] = opt.current_lr
             ss_prob_history[iteration] = model.ss_prob
 
         # make evaluation on validation set, and save model
         if (iteration % opt.save_checkpoint_every == 0):
             # eval model
-            eval_kwargs = {'split': 'val','dataset': opt.input_json}
+            eval_kwargs = {'split': 'val',
+                            'dataset': opt.input_json}
             eval_kwargs.update(vars(opt))
 
-            val_loss, predictions, lang_stats = eval_utils_for_FNet.eval_split(model, crit, loader, logger, eval_kwargs)
+            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, logger, eval_kwargs)
             logger.write_dict(lang_stats)
 
             # Write validation result into summary
@@ -208,7 +221,7 @@ def train(opt):
                 torch.save(model.state_dict(), checkpoint_path)
                 print("model saved to {}".format(checkpoint_path))
                 optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer.pth')
-                torch.save(optimizer.state_dict(), optimizer_path)
+                torch.save(optimizer_G.state_dict(), optimizer_path)
 
                 # Dump miscalleous informations
                 infos['iter'] = iteration
@@ -240,5 +253,5 @@ def train(opt):
             break
 
 torch.cuda.set_device(1)
-opt = opts_withSeriNet.parse_opt()
+opt = opts_withVSE.parse_opt()
 train(opt)

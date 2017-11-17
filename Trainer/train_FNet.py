@@ -9,14 +9,13 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils
 import misc.utils as utils
-import models
+from Eval_utils import eval_utils_for_FNet
 from dataloader import *
 from logger import Logger
-from models.ShowTellModel_vsemle import ContrastiveLoss
-from models.VSE import VSE
-from opts import opts_withVSE
+from misc.rewards import get_self_critical_reward_forFNet
+from models.FNetModel import FNetModel, ShowTellModel
+from opts import opts_withFNet
 
 
 def update_lr(opt, epoch, model, optimizer_G):
@@ -58,17 +57,9 @@ def train(opt):
 
     infos = {}
     histories = {}
-    if opt.start_from is not None:
-        # open old infos and check if models are compatible
-        with open(os.path.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
-            infos = cPickle.load(f)
-            saved_model_opt = infos['opt']
-            need_be_same=["caption_model", "rnn_type", "rnn_size", "num_layers"]
-            for checkme in need_be_same:
-                assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
-
-        if os.path.isfile(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
-            with open(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
+    if opt.start_from_S is not None:
+        if os.path.isfile(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')):
+            with open(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
 
     iteration = infos.get('iter', 0)
@@ -84,32 +75,29 @@ def train(opt):
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
 
-    model = models.setup(opt)
+    # Set CommNetModel
+    model1 = ShowTellModel(opt)
+    model2 = ShowTellModel(opt)
+    model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
+    model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
+    model1.cuda()
+    model2.cuda()
+
+    model = FNetModel(opt, model1, model2)
     model.cuda()
-
-    model_VSE = VSE(opt)
-
-    model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
-    print("=> loaded preterained vse model done.")
-
     logger = Logger(opt)
 
     update_lr_flag = True
-    # Assure in training mode
     model.train()
 
     crit = utils.LanguageModelCriterion()
-    crit_vse = ContrastiveLoss()
+    rl_crit = utils.RewardCriterion()
 
-    optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-
-    # Load the optimizer
-    if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer_G.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+    optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     while True:
         if update_lr_flag:
-            opt, sc_flag, update_lr_flag, model, optimizer_G = update_lr(opt, epoch, model, optimizer_G)
+            opt, sc_flag, update_lr_flag, model, optimizer = update_lr(opt, epoch, model, optimizer)
 
         # Load data from train split (0)
         data = loader.get_batch('train', seq_per_img=opt.seq_per_img)
@@ -117,35 +105,45 @@ def train(opt):
         torch.cuda.synchronize()
         start = time.time()
 
-        tmp = [data['fc_feats'], data['labels'], data['masks']]
+        tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
-        fc_feats, labels, masks = tmp
+        fc_feats, att_feats, labels, masks = tmp
 
-        optimizer_G.zero_grad()
+        optimizer.zero_grad()
+
         if not sc_flag:
-            loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
-            loss.backward()
+            out1, out2 = model(fc_feats, att_feats, labels)
+            loss_1, loss_2 = crit(out1, labels[:,1:], masks[:,1:]), crit(out2, labels[:,1:], masks[:,1:])
+            loss_1.backward(retain_graph=True)
+            loss_2.backward(retain_graph=True)
+            loss = loss_1 + loss_2
         else:
-            outputs, hiddens = model(fc_feats, labels)
+            gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
 
-            loss1 = crit(outputs, labels[:, 1:], masks[:, 1:])
-            loss1.backward(retain_graph=True)
+            reward_1, reward_2 = get_self_critical_reward_forFNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
 
-            fc_feats_reduced = model.img_embed(fc_feats)
-            loss2 = crit_vse(fc_feats_reduced, hiddens, masks[:, 1:])
-            loss2.backward(retain_graph=True)
+            loss_1 = rl_crit(sample_logprobs_1, gen_result_1, Variable(torch.from_numpy(reward_1).float().cuda(), requires_grad=False))
+            loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
 
-            loss = loss1 + loss2
+            loss_1.backward(retain_graph=True)
+            loss_2.backward(retain_graph=True)
+            loss = loss_1 + loss_2
 
-        utils.clip_gradient(optimizer_G, opt.grad_clip)
-        optimizer_G.step()
+        #utils.clip_gradient(optimizer, opt.grad_clip)
+        optimizer.step()
+
         train_loss = loss.data[0]
         torch.cuda.synchronize()
         end = time.time()
 
-        log = "iter {} (epoch {}), train_loss1 = {:.3f}, train_loss2 = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, loss1.data.cpu().numpy()[0], loss2.data.cpu().numpy()[0], end - start)
-        logger.write(log)
+        if not sc_flag:
+            log = "iter {} (epoch {}), loss_1 = {:.3f}, loss_2 = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, loss_1.data[0], loss_2.data[0], end - start)
+            logger.write(log)
+        else:
+            log = "iter {} (epoch {}), 1_avg_reward = {:.3f}, 2_avg_reward = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration,  epoch, np.mean(reward_1[:,0]), np.mean(reward_2[:,0]), end - start)
+            logger.write(log)
 
         # Update the iteration and epoch
         iteration += 1
@@ -159,20 +157,22 @@ def train(opt):
                 add_summary_value(tf_summary_writer, 'train_loss', train_loss, iteration)
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
                 add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
+                if sc_flag:
+                    add_summary_value(tf_summary_writer, 'avg_reward_S', np.mean(reward_1[:,0]), iteration)
+                    add_summary_value(tf_summary_writer, 'avg_reward_T', np.mean(reward_2[:,0]), iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss
+            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward_1[:,0]+reward_2[:,0])
             lr_history[iteration] = opt.current_lr
             ss_prob_history[iteration] = model.ss_prob
 
         # make evaluation on validation set, and save model
         if (iteration % opt.save_checkpoint_every == 0):
             # eval model
-            eval_kwargs = {'split': 'val',
-                            'dataset': opt.input_json}
+            eval_kwargs = {'split': 'val','dataset': opt.input_json}
             eval_kwargs.update(vars(opt))
 
-            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, logger, eval_kwargs)
+            val_loss, predictions, lang_stats = eval_utils_for_FNet.eval_split(model, crit, loader, logger, eval_kwargs)
             logger.write_dict(lang_stats)
 
             # Write validation result into summary
@@ -198,7 +198,7 @@ def train(opt):
                 torch.save(model.state_dict(), checkpoint_path)
                 print("model saved to {}".format(checkpoint_path))
                 optimizer_path = os.path.join(opt.checkpoint_path, 'optimizer.pth')
-                torch.save(optimizer_G.state_dict(), optimizer_path)
+                torch.save(optimizer.state_dict(), optimizer_path)
 
                 # Dump miscalleous informations
                 infos['iter'] = iteration
@@ -229,5 +229,6 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-opt = opts_withVSE.parse_opt()
+torch.cuda.set_device(1)
+opt = opts_withFNet.parse_opt()
 train(opt)

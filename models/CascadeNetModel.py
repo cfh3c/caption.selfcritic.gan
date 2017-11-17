@@ -24,6 +24,9 @@ class CascadeNetModel(nn.Module):
         self.ss_prob = 0.0
         self.seq_length = 16
 
+        self.gate_function = nn.Linear(1024, 1)
+        self.gate_function_2 = nn.Linear(1024, 1)
+
     def forward(self, fc_feats, att_feats, seq):
         batch_size = fc_feats.size(0)
 
@@ -89,7 +92,7 @@ class CascadeNetModel(nn.Module):
 
             xt = self.model2.embed(it)
 
-            output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2, (states1[i+1][0], states1[i+1][1]))
+            output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2, (states1[i+1][0], states1[i+1][1]), (self.gate_function, self.gate_function_2))
             output2 = F.log_softmax(self.model2.logit(output2))
             outputs2.append(output2)
 
@@ -189,11 +192,11 @@ class CascadeNetModel(nn.Module):
 
                 seqLogprobs2.append(sampleLogprobs2.view(-1))
 
-            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0], states1[t+1][1]))
+            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0], states1[t+1][1]), (self.gate_function, self.gate_function_2))
             logprobs2 = F.log_softmax(self.model2.logit(output2))
 
         if mode == 'sc':
-            return torch.cat([_.unsqueeze(1) for _ in seq1], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs2], 1), \
+            return torch.cat([_.unsqueeze(1) for _ in seq1], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs1], 1), \
                    torch.cat([_.unsqueeze(1) for _ in seq2], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs2], 1)
         else:
             return torch.cat([_.unsqueeze(1) for _ in seq2], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs2], 1)
@@ -469,12 +472,25 @@ class Att2inCore(nn.Module):
         self.h2att = nn.Linear(self.rnn_size, self.att_hid_size)
         self.alpha_net = nn.Linear(self.att_hid_size, 1)
 
-    def forward(self, xt, fc_feats, att_feats, p_att_feats, state, state_previous):
+    def forward(self, xt, fc_feats, att_feats, p_att_feats, state, state_previous, gate_function):
         # The p_att_feats here is already projected
         att_size = att_feats.numel() // att_feats.size(0) // self.att_feat_size
         att = p_att_feats.view(-1, att_size, self.att_hid_size)
 
-        state = state + state_previous
+        gate=True
+        if gate:
+            temp = torch.cat((state[0].squeeze(0), state_previous[0].squeeze(0)), dim=1)
+            gate = F.sigmoid(gate_function[0](temp))
+
+            temp2 = torch.cat((state[1].squeeze(0), state_previous[1].squeeze(0)), dim=1)
+            gate2 = F.sigmoid(gate_function[1](temp2))
+
+            state = (state[0] * gate + state_previous[0] * (1 - gate), state[1] * gate2 + state_previous[1] * (1 - gate2))
+        else:
+            state = state + state_previous
+
+        print('gate1, gate2 : {}, {}'.format(gate.data.cpu().numpy().mean(), gate2.data.cpu().numpy().mean()))
+
 
         att_h = self.h2att(state[0][-1])  # batch * att_hid_size
         #att_h = self.h2att(state)  # batch * att_hid_size

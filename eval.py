@@ -4,12 +4,11 @@ from __future__ import print_function
 
 import argparse
 
-import torch
 from six.moves import cPickle
 
-import eval_utils
 import misc.utils as utils
 import models
+from Eval_utils import eval_utils
 from dataloader import *
 from dataloaderraw import *
 
@@ -113,8 +112,8 @@ loader.ix_to_word = infos['vocab']
 
 
 # Set sample options
-loss, split_predictions, lang_stats = eval_utils.eval_split(model, crit, loader, 
-    vars(opt))
+loss, split_predictions, lang_stats = eval_utils.eval_split(model, crit, loader,
+                                                            vars(opt))
 
 print('loss: ', loss)
 if lang_stats:

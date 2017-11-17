@@ -9,13 +9,13 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils_for_FNet
 import misc.utils as utils
+from Eval_utils import eval_utils_for_FNet
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward_forFNet
-from models.FNetModel import FNetModel, ShowTellModel
-from opts import opts_withFNet
+from misc.rewards import get_self_critical_reward_forSeriNet
+from models.SeriNetModel import SeriNetModel, ShowTellModel
+from opts import opts_withSeriNet
 
 
 def update_lr(opt, epoch, model, optimizer_G):
@@ -58,6 +58,8 @@ def train(opt):
     infos = {}
     histories = {}
     if opt.start_from_S is not None:
+        with open(os.path.join(opt.start_from_S, 'infos_'+opt.id+'.pkl')) as f: # for continue training
+            infos = cPickle.load(f)
         if os.path.isfile(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')):
             with open(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
@@ -78,12 +80,13 @@ def train(opt):
     # Set CommNetModel
     model1 = ShowTellModel(opt)
     model2 = ShowTellModel(opt)
-    model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
-    model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
+    #model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
+    #model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
     model1.cuda()
     model2.cuda()
 
-    model = FNetModel(opt, model1, model2)
+    model = SeriNetModel(opt, model1, model2)
+    model.load_state_dict(torch.load('/home/vdo-gt/_code/caption.selfcritic.gan/experiment/20171113_170707/model.pth'))
     model.cuda()
     logger = Logger(opt)
 
@@ -94,6 +97,8 @@ def train(opt):
     rl_crit = utils.RewardCriterion()
 
     optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
+    #model2_parameter = list(model.parameters())
+    #optimizer_T = optim.Adam(model2_parameter, lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     while True:
         if update_lr_flag:
@@ -118,16 +123,20 @@ def train(opt):
             loss_2.backward(retain_graph=True)
             loss = loss_1 + loss_2
         else:
+            #out1, out2 = model(fc_feats, att_feats, labels)
+            #loss_1 = crit(out1, labels[:,1:], masks[:,1:])
+            #loss_1.backward(retain_graph=True)
+
+            #optimizer.step() dda ro?
+
             gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
+            reward_2 = get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
 
-            reward_1, reward_2 = get_self_critical_reward_forFNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
-
-            loss_1 = rl_crit(sample_logprobs_1, gen_result_1, Variable(torch.from_numpy(reward_1).float().cuda(), requires_grad=False))
             loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
-
-            loss_1.backward(retain_graph=True)
             loss_2.backward(retain_graph=True)
-            loss = loss_1 + loss_2
+
+            #loss = loss_1 + loss_2
+            loss = loss_2
 
         #utils.clip_gradient(optimizer, opt.grad_clip)
         optimizer.step()
@@ -141,8 +150,10 @@ def train(opt):
                 .format(iteration, epoch, loss_1.data[0], loss_2.data[0], end - start)
             logger.write(log)
         else:
-            log = "iter {} (epoch {}), 1_avg_reward = {:.3f}, 2_avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration,  epoch, np.mean(reward_1[:,0]), np.mean(reward_2[:,0]), end - start)
+            #log = "iter {} (epoch {}), loss_1(mle) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
+            #    .format(iteration,  epoch, loss_1.data[0], np.mean(reward_2[:,0]), end - start)
+            log = "iter {} (epoch {}), loss = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
+               .format(iteration,  epoch, loss.data[0], np.mean(reward_2[:,0]), end - start)
             logger.write(log)
 
         # Update the iteration and epoch
@@ -158,11 +169,10 @@ def train(opt):
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
                 add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
                 if sc_flag:
-                    add_summary_value(tf_summary_writer, 'avg_reward_S', np.mean(reward_1[:,0]), iteration)
-                    add_summary_value(tf_summary_writer, 'avg_reward_T', np.mean(reward_2[:,0]), iteration)
+                    add_summary_value(tf_summary_writer, 'avg_reward', np.mean(reward_2[:,0]), iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward_1[:,0]+reward_2[:,0])
+            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward_2[:,0])
             lr_history[iteration] = opt.current_lr
             ss_prob_history[iteration] = model.ss_prob
 
@@ -230,5 +240,5 @@ def train(opt):
             break
 
 torch.cuda.set_device(1)
-opt = opts_withFNet.parse_opt()
+opt = opts_withSeriNet.parse_opt()
 train(opt)

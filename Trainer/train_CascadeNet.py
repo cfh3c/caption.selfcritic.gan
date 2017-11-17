@@ -9,8 +9,8 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils_for_FNet
 import misc.utils as utils
+from Eval_utils import eval_utils_for_FNet
 from dataloader import *
 from logger import Logger
 from misc.rewards import get_self_critical_reward_forSeriNet
@@ -115,23 +115,21 @@ def train(opt):
         if not sc_flag:
             out1, out2 = model(fc_feats, att_feats, labels)
             loss_1, loss_2 = crit(out1, labels[:,1:], masks[:,1:]), crit(out2, labels[:,1:], masks[:,1:])
-            loss_1.backward()
-            loss_2.backward()
             loss = loss_1 + loss_2
+            loss.backward()
         else:
-            out1, out2 = model(fc_feats, att_feats, labels)
-            loss_1 = crit(out1, labels[:,1:], masks[:,1:])
-            loss_1.backward()
+            #out1, out2 = model(fc_feats, att_feats, labels)
+            #loss_1 = crit(out1, labels[:,1:], masks[:,1:])
 
             gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
             reward_2 = get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
 
             loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
-            loss_2.backward()
 
-            loss = loss_1 + loss_2
+            loss = loss_2#loss_1 + loss_2
+            loss.backward()
 
-        #utils.clip_gradient(optimizer, opt.grad_clip)
+        utils.clip_gradient_2(optimizer, opt.grad_clip)
         optimizer.step()
 
         train_loss = loss.data[0]
@@ -143,8 +141,8 @@ def train(opt):
                 .format(iteration, epoch, loss_1.data[0], loss_2.data[0], end - start)
             logger.write(log)
         else:
-            log = "iter {} (epoch {}), loss_1(mle) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration,  epoch, loss_1.data[0], np.mean(reward_2[:,0]), end - start)
+            log = "iter {} (epoch {}), loss_2(sc) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration,  epoch, loss_2.data[0], np.mean(reward_2[:,0]), end - start)
             logger.write(log)
 
         # Update the iteration and epoch

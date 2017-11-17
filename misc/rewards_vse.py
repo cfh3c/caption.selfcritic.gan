@@ -57,7 +57,7 @@ def get_currscore_reward(model_G, model_VSE, fc_feats, gen_result, logger):
     # REWARD THRESHOLD
     rewards = -(rewards_sample_ - rewards_greedy_)
     for i in xrange(len(rewards)):
-        if rewards_sample_[i] <= 0.05:
+        if rewards_sample_[i] >= 0.10:
             rewards[i] = 0.0
     log = 'currscore mean rewards: %f' % rewards.mean()
     logger.write(log)

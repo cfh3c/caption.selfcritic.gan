@@ -408,7 +408,7 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
     batch_size = gen_result.size(0)  # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
 
-    greedy_res, greedy_res_2, _, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True), mode='sc')
+    greedy_res, _, greedy_res_2, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True), mode='sc')
 
     res = OrderedDict()
 
@@ -418,11 +418,20 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
     greedy_res = greedy_res.cpu().numpy()
     greedy_res_2 = greedy_res_2.cpu().numpy()
 
+    #test1, test2, test3, test4 = OrderedDict(), OrderedDict(), OrderedDict(), OrderedDict()
+
     for i in range(batch_size):
         res[i] = [array_to_str(gen_result[i])]
         res[batch_size + i] = [array_to_str(gen_result_2[i])]
         res[batch_size*2 + i] = [array_to_str(greedy_res[i])]
         res[batch_size*3 + i] = [array_to_str(greedy_res_2[i])]
+    #
+    #     test1[i] = [array_to_str(gen_result[i])]
+    #     test2[i] = [array_to_str(gen_result_2[i])]
+    #     test3[i] = [array_to_str(greedy_res[i])]
+    #     test4[i] = [array_to_str(greedy_res_2[i])]
+    #
+    # ss = test(test1, test2, test3, test4)
 
     gts = OrderedDict()
     for i in range(len(data['gts'])):
@@ -439,9 +448,14 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
     scores_greedy = scores[batch_size*2:batch_size*3]
     scores_greedy_2 = scores[batch_size*3:]
 
-    #scores_2 = scores_sample_2 - scores_greedy
-    scores_2 = scores_sample_2 - (scores_greedy + scores_greedy_2)/2
+    scores_2 = scores_sample_2 - scores_greedy_2
+    #scores_2 = scores_sample_2 - (scores_greedy + scores_greedy_2)/2
 
     rewards_2 = np.repeat(scores_2[:, np.newaxis], gen_result_2.shape[1], 1)
 
     return rewards_2
+
+def test(test1, test2, test3, test4):
+
+    print('checking')
+    return 1

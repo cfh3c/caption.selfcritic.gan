@@ -9,15 +9,15 @@ import torch.optim as optim
 from six.moves import cPickle
 from torch.autograd import Variable
 
-import eval_utils
 import misc.utils as utils
 import models
+from Eval_utils import eval_utils
 from dataloader import *
 from logger import Logger
-from misc.rewards import get_self_critical_reward
-from misc.rewards_vse import get_currscore_reward, get_sim_reward
-from opts import opts_withVSE
+from models.ShowTellModel_vsemle import ContrastiveLoss
 from models.VSE import VSE
+from opts import opts_withVSE
+
 
 def update_lr(opt, epoch, model, optimizer_G):
 
@@ -89,14 +89,8 @@ def train(opt):
 
     model_VSE = VSE(opt)
 
-    print("=> loading checkpoint '{}'".format(opt.vse_pretrained_path))
-    checkpoint = torch.load(opt.vse_pretrained_path)
-    #start_epoch = checkpoint['epoch']
-    #best_rsum = checkpoint['best_rsum']
-    model_VSE.load_state_dict(checkpoint['model'])
     model_VSE.load_state_dict(torch.load(opt.vse_pretrained_path)['model'])
     print("=> loaded preterained vse model done.")
-    #validate(opt, data_loader, model)
 
     logger = Logger(opt)
 
@@ -105,7 +99,7 @@ def train(opt):
     model.train()
 
     crit = utils.LanguageModelCriterion()
-    rl_crit = utils.RewardCriterion()
+    crit_vse = ContrastiveLoss()
 
     optimizer_G = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
@@ -123,33 +117,25 @@ def train(opt):
         torch.cuda.synchronize()
         start = time.time()
 
-        tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
+        tmp = [data['fc_feats'], data['labels'], data['masks']]
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
-        fc_feats, att_feats, labels, masks = tmp
+        fc_feats, labels, masks = tmp
 
         optimizer_G.zero_grad()
         if not sc_flag:
             loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
             loss.backward()
         else:
-            loss = crit(model(fc_feats, att_feats, labels), labels[:,1:], masks[:,1:])
-            loss.backward(retain_graph=True)
+            outputs, hiddens = model(fc_feats, labels)
 
-            gen_result, sample_logprobs = model.sample(fc_feats, att_feats, {'sample_max':0})
-            #sc_reward = get_self_critical_reward(model, fc_feats, att_feats, data, gen_result, logger)
-            #test = get_reward_test(model, fc_feats, data, gen_result, logger)
-            curr_reward = get_currscore_reward(model, model_VSE, fc_feats, gen_result, logger)
-            #sim_reward = get_sim_reward(model, model_VSE, fc_feats, gen_result, logger)
-            reward = curr_reward
+            loss1 = crit(outputs, labels[:, 1:], masks[:, 1:])
+            loss1.backward(retain_graph=True)
 
-            #loss2 = crit(model(fc_feats, labels), labels[:, 1:], masks[:, 1:])
-            #loss2.backward()
-            #reward = np.ones((10,10))
+            fc_feats_reduced = model.img_embed(fc_feats)
+            loss2 = crit_vse(fc_feats_reduced, hiddens, masks[:, 1:])
+            loss2.backward(retain_graph=True)
 
-            loss1 = rl_crit(sample_logprobs, gen_result, Variable(torch.from_numpy(reward).float().cuda(), requires_grad=False))
-            loss1.backward()
-
-            loss = loss1
+            loss = loss1 + loss2
 
         utils.clip_gradient(optimizer_G, opt.grad_clip)
         optimizer_G.step()
@@ -157,16 +143,9 @@ def train(opt):
         torch.cuda.synchronize()
         end = time.time()
 
-        if not sc_flag:
-            log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration, epoch, train_loss, end - start)
-            logger.write(log)
-        else:
-            log = "iter {} (epoch {}), avg_reward = {:.3f}, time/batch = {:.3f}" \
-                .format(iteration,  epoch, np.mean(reward[:,0]), end - start)
-            #log = "iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-            #    .format(iteration, epoch, train_loss, end - start)
-            logger.write(log)
+        log = "iter {} (epoch {}), train_loss1 = {:.3f}, train_loss2 = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration, epoch, loss1.data.cpu().numpy()[0], loss2.data.cpu().numpy()[0], end - start)
+        logger.write(log)
 
         # Update the iteration and epoch
         iteration += 1
@@ -180,11 +159,9 @@ def train(opt):
                 add_summary_value(tf_summary_writer, 'train_loss', train_loss, iteration)
                 add_summary_value(tf_summary_writer, 'learning_rate', opt.current_lr, iteration)
                 add_summary_value(tf_summary_writer, 'scheduled_sampling_prob', model.ss_prob, iteration)
-                if sc_flag:
-                    add_summary_value(tf_summary_writer, 'avg_reward', np.mean(reward[:,0]), iteration)
                 tf_summary_writer.flush()
 
-            loss_history[iteration] = train_loss if not sc_flag else np.mean(reward[:,0])
+            loss_history[iteration] = train_loss
             lr_history[iteration] = opt.current_lr
             ss_prob_history[iteration] = model.ss_prob
 
@@ -252,6 +229,5 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-torch.cuda.set_device(1)
 opt = opts_withVSE.parse_opt()
 train(opt)
