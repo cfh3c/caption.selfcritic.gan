@@ -14,8 +14,8 @@ from Eval_utils import eval_utils_for_FNet
 from dataloader import *
 from logger import Logger
 from misc.rewards import get_self_critical_reward_forSeriNet
-from models.SeriNetModel import SeriNetModel, ShowTellModel
-from opts import opts_withSeriNet
+from models.Cascade_sta2inModel import CascadeNetModel, ShowTellModel, Att2inModel
+from opts import opts_withCascade_sta2in
 
 
 def update_lr(opt, epoch, model, optimizer_G):
@@ -48,7 +48,7 @@ def add_summary_value(writer, key, value, iteration):
     writer.add_summary(summary, iteration)
 
 def train(opt):
-    opt.use_att = utils.if_use_att(opt.caption_model)
+    opt.use_att = True#utils.if_use_att(opt.caption_model)
     loader = DataLoader(opt)
     opt.vocab_size = loader.vocab_size
     opt.seq_length = loader.seq_length
@@ -58,8 +58,6 @@ def train(opt):
     infos = {}
     histories = {}
     if opt.start_from_S is not None:
-        with open(os.path.join(opt.start_from_S, 'infos_'+opt.id+'.pkl')) as f: # for continue training
-            infos = cPickle.load(f)
         if os.path.isfile(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')):
             with open(os.path.join(opt.start_from_S, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
@@ -79,14 +77,14 @@ def train(opt):
 
     # Set CommNetModel
     model1 = ShowTellModel(opt)
-    model2 = ShowTellModel(opt)
-    #model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
-    #model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
+    model2 = Att2inModel(opt)
+    model1.load_state_dict(torch.load(os.path.join(opt.start_from_T, 'model.pth')))
+    model2.load_state_dict(torch.load(os.path.join(opt.start_from_S, 'model.pth')))
     model1.cuda()
     model2.cuda()
 
-    model = SeriNetModel(opt, model1, model2)
-    model.load_state_dict(torch.load('/home/vdo-gt/_code/caption.selfcritic.gan/experiment/20171113_170707/model.pth'))
+    model = CascadeNetModel(opt, model1, model2)
+    #model.load_state_dict(torch.load('/home/vdo-gt/_code/caption.selfcritic.gan/experiment/20171110_231524/model-best.pth'))
     model.cuda()
     logger = Logger(opt)
 
@@ -97,8 +95,6 @@ def train(opt):
     rl_crit = utils.RewardCriterion()
 
     optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
-    #model2_parameter = list(model.parameters())
-    #optimizer_T = optim.Adam(model2_parameter, lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     while True:
         if update_lr_flag:
@@ -119,26 +115,21 @@ def train(opt):
         if not sc_flag:
             out1, out2 = model(fc_feats, att_feats, labels)
             loss_1, loss_2 = crit(out1, labels[:,1:], masks[:,1:]), crit(out2, labels[:,1:], masks[:,1:])
-            loss_1.backward(retain_graph=True)
-            loss_2.backward(retain_graph=True)
             loss = loss_1 + loss_2
+            loss.backward()
         else:
             #out1, out2 = model(fc_feats, att_feats, labels)
             #loss_1 = crit(out1, labels[:,1:], masks[:,1:])
-            #loss_1.backward(retain_graph=True)
-
-            #optimizer.step() dda ro?
 
             gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
             reward_2 = get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
 
             loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
-            loss_2.backward(retain_graph=True)
 
-            #loss = loss_1 + loss_2
-            loss = loss_2
+            loss = loss_2#loss_1 + loss_2
+            loss.backward()
 
-        #utils.clip_gradient(optimizer, opt.grad_clip)
+        utils.clip_gradient_2(optimizer, opt.grad_clip)
         optimizer.step()
 
         train_loss = loss.data[0]
@@ -150,10 +141,8 @@ def train(opt):
                 .format(iteration, epoch, loss_1.data[0], loss_2.data[0], end - start)
             logger.write(log)
         else:
-            #log = "iter {} (epoch {}), loss_1(mle) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
-            #    .format(iteration,  epoch, loss_1.data[0], np.mean(reward_2[:,0]), end - start)
-            log = "iter {} (epoch {}), loss = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
-               .format(iteration,  epoch, loss.data[0], np.mean(reward_2[:,0]), end - start)
+            log = "iter {} (epoch {}), loss_2(sc) = {:.3f}, avg_reward = {:.3f}, time/batch = {:.3f}" \
+                .format(iteration,  epoch, loss_2.data[0], np.mean(reward_2[:,0]), end - start)
             logger.write(log)
 
         # Update the iteration and epoch
@@ -239,6 +228,6 @@ def train(opt):
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
 
-torch.cuda.set_device(1)
-opt = opts_withSeriNet.parse_opt()
+torch.cuda.set_device(0)
+opt = opts_withCascade_sta2in.parse_opt()
 train(opt)

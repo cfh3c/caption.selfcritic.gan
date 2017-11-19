@@ -28,6 +28,10 @@ class SeriNetModel(nn.Module):
         self.channel1 = nn.Linear(opt.rnn_size, opt.rnn_size)
         self.channel2 = nn.Linear(opt.rnn_size, opt.rnn_size)
 
+        self.mixed_info1 = nn.Linear(opt.rnn_size*2, opt.rnn_size)
+        self.mixed_info2 = nn.Linear(opt.rnn_size*2, opt.rnn_size)
+
+
     def forward(self, fc_feats, att_feats, seq):
         batch_size = fc_feats.size(0)
 
@@ -64,11 +68,10 @@ class SeriNetModel(nn.Module):
             outputs1.append(output1)
 
         state2 = self.pick_final_state(states1, seq, mode='train')
-        #state2 = tuple([a.detach() for a in state2])
 
-        #extra_info = [st.detach() for st in state2]
-        extra_info = [st for st in state2]
-        extra_info = [F.sigmoid(self.channel1(extra_info[0])), F.sigmoid(self.channel2(extra_info[1]))]
+        extra_info = [st.detach() for st in state2]
+        #extra_info = [st for st in state2]
+        extra_info = [F.tanh(self.channel1(extra_info[0])), F.tanh(self.channel2(extra_info[1]))]
         extra_info = tuple(extra_info)
 
         outputs2 = list()
@@ -96,7 +99,10 @@ class SeriNetModel(nn.Module):
                 xt2 = self.model2.embed(it2)
 
             if self.use_extra_info:
-                state2 = ((state2[0] + extra_info[0])/2, (state2[1] + extra_info[1])/2)
+                #state2 = ((state2[0] + extra_info[0])/2, (state2[1] + extra_info[1])/2)
+                temp1 = torch.cat((state2[0].squeeze(0), extra_info[0].squeeze(0)), dim=1)
+                temp2 = torch.cat((state2[1].squeeze(0), extra_info[1].squeeze(0)), dim=1)
+                state2 = (F.tanh(self.mixed_info1(temp1)).unsqueeze(0), F.tanh(self.mixed_info2(temp2)).unsqueeze(0))
 
             output2, state2 = self.model2.core(xt2.unsqueeze(0), state2)
 
@@ -164,11 +170,11 @@ class SeriNetModel(nn.Module):
         seq_ = Variable(torch.transpose(seq_, 0, 1)).cuda()
         state2 = self.pick_final_state(states1, seq_, mode='sample')
 
-        #extra_info = [st for st in state2]
         extra_info = [st.detach() for st in state2]
-
-        extra_info = [F.sigmoid(self.channel1(extra_info[0])), F.sigmoid(self.channel2(extra_info[1]))]
+        #extra_info = [st for st in state2]
+        extra_info = [F.tanh(self.channel1(extra_info[0])), F.tanh(self.channel2(extra_info[1]))]
         extra_info = tuple(extra_info)
+
 
         for t in range(self.seq_length + 2):
             if t == 0:
@@ -204,7 +210,10 @@ class SeriNetModel(nn.Module):
                 seqLogprobs2.append(sampleLogprobs2.view(-1))
 
             if self.use_extra_info:
-                state2 = ((state2[0] + extra_info[0])/2, (state2[1] + extra_info[1])/2)
+                #state2 = ((state2[0] + extra_info[0])/2, (state2[1] + extra_info[1])/2)
+                temp1 = torch.cat((state2[0].squeeze(0), extra_info[0].squeeze(0)), dim=1)
+                temp2 = torch.cat((state2[1].squeeze(0), extra_info[1].squeeze(0)), dim=1)
+                state2 = (F.tanh(self.mixed_info1(temp1)).unsqueeze(0), F.tanh(self.mixed_info2(temp2)).unsqueeze(0))
 
             output2, state2 = self.model2.core(xt2.unsqueeze(0), state2)
             logprobs2 = F.log_softmax(self.model2.logit(self.model2.dropout(output2.squeeze(0))))

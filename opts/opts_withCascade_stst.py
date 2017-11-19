@@ -23,7 +23,7 @@ def parse_opt():
                                               Note: this file contains absolute paths, be careful when moving files around;
                         'model.ckpt-*'      : file(s) with model definition (created by tf)
                     """)
-    parser.add_argument('--start_from_S', type=str, default='save/att2in/',
+    parser.add_argument('--start_from_S', type=str, default='save/showtell_2/',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
@@ -52,13 +52,13 @@ def parse_opt():
     # Optimization: General
     parser.add_argument('--max_epochs', type=int, default=40,
                     help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=32, # 128
+    parser.add_argument('--batch_size', type=int, default=64, # 128
                     help='minibatch size')
     parser.add_argument('--grad_clip', type=float, default=5.,
                     help='clip gradients at this value')
     parser.add_argument('--drop_prob_lm', type=float, default=0.5,
                     help='strength of dropout in the Language Model RNN')
-    parser.add_argument('--self_critical_after', type=int, default=0,
+    parser.add_argument('--self_critical_after', type=int, default=-1,
                     help='After what epoch do we start finetuning the CNN? (-1 = disable; never finetune, 0 = finetune from start)')
     parser.add_argument('--seq_per_img', type=int, default=5,
                     help='number of captions to sample for each image during training. Done for efficiency since CNN forward pass is expensive. E.g. coco has 5 sents/image')

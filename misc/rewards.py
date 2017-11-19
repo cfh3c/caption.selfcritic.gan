@@ -425,13 +425,6 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
         res[batch_size + i] = [array_to_str(gen_result_2[i])]
         res[batch_size*2 + i] = [array_to_str(greedy_res[i])]
         res[batch_size*3 + i] = [array_to_str(greedy_res_2[i])]
-    #
-    #     test1[i] = [array_to_str(gen_result[i])]
-    #     test2[i] = [array_to_str(gen_result_2[i])]
-    #     test3[i] = [array_to_str(greedy_res[i])]
-    #     test4[i] = [array_to_str(greedy_res_2[i])]
-    #
-    # ss = test(test1, test2, test3, test4)
 
     gts = OrderedDict()
     for i in range(len(data['gts'])):
@@ -454,8 +447,3 @@ def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_re
     rewards_2 = np.repeat(scores_2[:, np.newaxis], gen_result_2.shape[1], 1)
 
     return rewards_2
-
-def test(test1, test2, test3, test4):
-
-    print('checking')
-    return 1

@@ -24,8 +24,15 @@ class CascadeNetModel(nn.Module):
         self.ss_prob = 0.0
         self.seq_length = 16
 
-        self.gate_function = nn.Linear(1024, 1)
-        self.gate_function_2 = nn.Linear(1024, 1)
+        self.gate_function = nn.Linear(1024+512, 512)
+        self.gate_function_2 = nn.Linear(1024+512, 512)
+
+        self.state_embed = False
+        self.state_embedding = nn.Linear(512, 512)
+        self.state_embedding_2 = nn.Linear(512, 512)
+        initrange = 0.01
+        self.state_embedding.weight.data.uniform_(-initrange, initrange)
+        self.state_embedding_2.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, fc_feats, att_feats, seq):
         batch_size = fc_feats.size(0)
@@ -63,9 +70,8 @@ class CascadeNetModel(nn.Module):
             output1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))), dim=1)
             outputs1.append(output1)
 
-        #state2 = self.pick_final_state(states1, seq, mode='train')
-        #state2 = tuple([a.detach() for a in state2[0]], [a.detach() for a in state2[1]])
-        #state2 = tuple([a.detach() for a in state2])
+        stage1_final_state = self.pick_final_state(states1, seq, mode='train')
+        stage1_final_state = tuple([a.detach() for a in stage1_final_state])
 
         state2 = self.model2.init_hidden(batch_size)
 
@@ -92,7 +98,15 @@ class CascadeNetModel(nn.Module):
 
             xt = self.model2.embed(it)
 
-            output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2, (states1[i+1][0], states1[i+1][1]), (self.gate_function, self.gate_function_2))
+            if self.state_embed == True:
+                state1_1 = self.state_embedding(states1[i+1][0])
+                state1_2 = self.state_embedding_2(states1[i+1][1])
+                output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2,
+                                                   (state1_1, state1_2), (self.gate_function, self.gate_function_2), stage1_final_state)
+            else:
+                output2, state2 = self.model2.core(xt, fc_feats, att_feats, p_att_feats, state2,
+                                                   (states1[i + 1][0], states1[i + 1][1]), (self.gate_function, self.gate_function_2), stage1_final_state)
+
             output2 = F.log_softmax(self.model2.logit(output2))
             outputs2.append(output2)
 
@@ -149,13 +163,15 @@ class CascadeNetModel(nn.Module):
                 seqLogprobs1.append(sampleLogprobs1.view(-1))
 
             output1, state1 = self.model1.core(xt1.unsqueeze(0), state1)
-            states1.append((state1[0].detach(), state1[1].detach()))
+            #states1.append((state1[0].detach(), state1[1].detach()))
+            states1.append((state1[0], state1[1]))
             logprobs1 = F.log_softmax(self.model1.logit(self.model1.dropout(output1.squeeze(0))))
 
-        #seq_ = [s.unsqueeze(0) for s in seq1]
-        #seq_ = torch.cat(seq_)
-        #seq_ = Variable(torch.transpose(seq_, 0, 1)).cuda()
-        #state2 = self.pick_final_state(states1, seq_, mode='sample')
+        seq_ = [s.unsqueeze(0) for s in seq1]
+        seq_ = torch.cat(seq_)
+        seq_ = Variable(torch.transpose(seq_, 0, 1)).cuda()
+        stage1_final_state = self.pick_final_state(states1, seq_, mode='sample')
+        stage1_final_state = tuple([a.detach() for a in stage1_final_state])
 
         state2 = self.model2.init_hidden(batch_size)
         p_att_feats = self.model2.ctx2att(att_feats.view(-1, self.model2.att_feat_size))
@@ -192,7 +208,7 @@ class CascadeNetModel(nn.Module):
 
                 seqLogprobs2.append(sampleLogprobs2.view(-1))
 
-            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0], states1[t+1][1]), (self.gate_function, self.gate_function_2))
+            output2, state2 = self.model2.core(xt2, fc_feats, att_feats, p_att_feats, state2, (states1[t+1][0], states1[t+1][1]), (self.gate_function, self.gate_function_2), stage1_final_state)
             logprobs2 = F.log_softmax(self.model2.logit(output2))
 
         if mode == 'sc':
@@ -205,7 +221,7 @@ class CascadeNetModel(nn.Module):
         seq_length = seq.size(1)
         seq = seq.data.cpu().numpy()
 
-        assert len(states1) == seq.shape[1], "not equal len(states1) == seq.shape[1]"
+        #assert len(states1) == seq.shape[1], "not equal len(states1) == seq.shape[1]"
 
         temps1 = list()
         temps2 = list()
@@ -472,24 +488,31 @@ class Att2inCore(nn.Module):
         self.h2att = nn.Linear(self.rnn_size, self.att_hid_size)
         self.alpha_net = nn.Linear(self.att_hid_size, 1)
 
-    def forward(self, xt, fc_feats, att_feats, p_att_feats, state, state_previous, gate_function):
+    def forward(self, xt, fc_feats, att_feats, p_att_feats, state, state_previous, gate_function, stage1_final_state):
         # The p_att_feats here is already projected
         att_size = att_feats.numel() // att_feats.size(0) // self.att_feat_size
         att = p_att_feats.view(-1, att_size, self.att_hid_size)
 
-        gate=True
-        if gate:
-            temp = torch.cat((state[0].squeeze(0), state_previous[0].squeeze(0)), dim=1)
+        if_gate=2
+        if if_gate==1:
+            temp = torch.cat((state[0].squeeze(0), state_previous[0].squeeze(0), stage1_final_state[0].squeeze(0)), dim=1)
             gate = F.sigmoid(gate_function[0](temp))
 
-            temp2 = torch.cat((state[1].squeeze(0), state_previous[1].squeeze(0)), dim=1)
+            temp2 = torch.cat((state[1].squeeze(0), state_previous[1].squeeze(0), stage1_final_state[1].squeeze(0)), dim=1)
             gate2 = F.sigmoid(gate_function[1](temp2))
 
             state = (state[0] * gate + state_previous[0] * (1 - gate), state[1] * gate2 + state_previous[1] * (1 - gate2))
+
+        elif if_gate==2:
+            temp = torch.cat((state[0].squeeze(0), state_previous[0].squeeze(0), stage1_final_state[0].squeeze(0)), dim=1)
+            temp2 = torch.cat((state[1].squeeze(0), state_previous[1].squeeze(0), stage1_final_state[1].squeeze(0)), dim=1)
+            state_11 = F.tanh(gate_function[0](temp))
+            state_22 = F.tanh(gate_function[1](temp2))
+            state = (state_11.unsqueeze(0), state_22.unsqueeze(0))
         else:
             state = state + state_previous
 
-        print('gate1, gate2 : {}, {}'.format(gate.data.cpu().numpy().mean(), gate2.data.cpu().numpy().mean()))
+        #print('gate1, gate2 : {}, {}'.format(gate.data.cpu().numpy().mean(), gate2.data.cpu().numpy().mean()))
 
 
         att_h = self.h2att(state[0][-1])  # batch * att_hid_size
