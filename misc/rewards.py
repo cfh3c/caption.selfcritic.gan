@@ -11,7 +11,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 import sys
-sys.path.append("cider")
+sys.path.append("../cider")
 from pyciderevalcap.ciderD.ciderD import CiderD
 
 CiderD_scorer = CiderD(df='coco-train-idxs')
@@ -404,7 +404,7 @@ def get_self_critical_reward_forFNet(model, fc_feats, att_feats, data, gen_resul
     return rewards_1, rewards_2
 
 
-def get_self_critical_reward_forSeriNet(model, fc_feats, att_feats, data, gen_result, gen_result_2, logger):
+def get_self_critical_reward_forCascade(model, fc_feats, att_feats, data, gen_result, gen_result_2, logger):
     batch_size = gen_result.size(0)  # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
 

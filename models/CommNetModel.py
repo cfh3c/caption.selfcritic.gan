@@ -100,10 +100,12 @@ class CommNetModel(nn.Module):
 
             Cont1_1 = self.Control_1_state(state[0])      # [0]=cell_state / [1]=hidden_state??
             Cont1_2 = self.Control_1_mean(mean_state[0])
+            #state_comm_1 = F.tanh(Cont1_1 + Cont1_2)
             state_comm_1 = F.sigmoid(Cont1_1 + Cont1_2)
 
             Cont2_1 = self.Control_2_state(state[1])
             Cont2_2 = self.Control_2_mean(mean_state[1])
+            #state_comm_2 = F.tanh(Cont2_1 + Cont2_2)
             state_comm_2 = F.sigmoid(Cont2_1 + Cont2_2)
 
             state_comm = (state_comm_1, state_comm_2)
@@ -122,14 +124,16 @@ class CommNetModel(nn.Module):
             Cont1_1 = self.state_embedding_0(state[0])
             Cont1_2 = self.state_embedding_0(state2[0])
             #state0 = self.Control_0(Cont1_1 + Cont1_2)
+            #state0 = self.Control_0(F.tanh(Cont1_1) + F.tanh(Cont1_2))
             state0 = self.Control_0(F.leaky_relu(Cont1_1) + F.leaky_relu(Cont1_2))
 
             Cont2_1 = self.state_embedding_1(state[1])
             Cont2_2 = self.state_embedding_1(state2[1])
             #state1 = self.Control_1(Cont2_1 + Cont2_2)
+            #state1 = self.Control_1(F.tanh(Cont2_1) + F.tanh(Cont2_2))
             state1 = self.Control_1(F.leaky_relu(Cont2_1) + F.leaky_relu(Cont2_2))
 
-            state_comm = (F.sigmoid(state0), F.sigmoid(state1))
+            state_comm = (F.tanh(state0), F.tanh(state1))
 
         elif rnn_type == 'RNN':
             pass

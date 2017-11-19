@@ -8,13 +8,13 @@ def parse_opt():
     parser = argparse.ArgumentParser()
 
     # Data input settings
-    parser.add_argument('--input_json', type=str, default='data/cocotalk.json',
+    parser.add_argument('--input_json', type=str, default='../data/cocotalk.json',
                     help='path to the json file containing additional info and vocab')
     parser.add_argument('--input_fc_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_fc',
                     help='path to the directory containing the preprocessed fc feats')
     parser.add_argument('--input_att_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_att',
                     help='path to the directory containing the preprocessed att feats')
-    parser.add_argument('--input_label_h5', type=str, default='data/cocotalk_label.h5',
+    parser.add_argument('--input_label_h5', type=str, default='../data/cocotalk_label.h5',
                     help='path to the h5file containing the preprocessed dataset')
     parser.add_argument('--start_from_T', type=str, default='save/showtell_2/',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
@@ -23,7 +23,7 @@ def parse_opt():
                                               Note: this file contains absolute paths, be careful when moving files around;
                         'model.ckpt-*'      : file(s) with model definition (created by tf)
                     """)
-    parser.add_argument('--start_from_S', type=str, default='save/att2in/',
+    parser.add_argument('--start_from_S', type=str, default='../save/att2in/',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).

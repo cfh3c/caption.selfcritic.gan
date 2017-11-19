@@ -11,7 +11,7 @@ from torch.autograd import Variable
 
 import misc.utils as utils
 import models
-from Eval_utils import eval_utils
+from Eval_utils import eval_utils_forVSE
 from dataloader import *
 from logger import Logger
 from models.ShowTellModel_vsemle import ContrastiveLoss
@@ -117,25 +117,27 @@ def train(opt):
         torch.cuda.synchronize()
         start = time.time()
 
-        tmp = [data['fc_feats'], data['labels'], data['masks']]
+        tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
         tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
-        fc_feats, labels, masks = tmp
+        fc_feats, att_feats, labels, masks = tmp
 
         optimizer_G.zero_grad()
         if not sc_flag:
-            loss = crit(model(fc_feats, labels), labels[:,1:], masks[:,1:])
+            outputs, hiddens = model(fc_feats, labels)
+            loss = crit(outputs, labels[:,1:], masks[:,1:])
             loss.backward()
         else:
             outputs, hiddens = model(fc_feats, labels)
 
             loss1 = crit(outputs, labels[:, 1:], masks[:, 1:])
-            loss1.backward(retain_graph=True)
+            #loss1.backward(retain_graph=True)
 
             fc_feats_reduced = model.img_embed(fc_feats)
             loss2 = crit_vse(fc_feats_reduced, hiddens, masks[:, 1:])
-            loss2.backward(retain_graph=True)
+            #loss2.backward(retain_graph=True)
 
-            loss = loss1 + loss2
+            loss = loss1 + loss2 * 0.1
+            loss.backward()
 
         utils.clip_gradient(optimizer_G, opt.grad_clip)
         optimizer_G.step()
@@ -172,7 +174,7 @@ def train(opt):
                             'dataset': opt.input_json}
             eval_kwargs.update(vars(opt))
 
-            val_loss, predictions, lang_stats = eval_utils.eval_split(model, crit, loader, logger, eval_kwargs)
+            val_loss, predictions, lang_stats = eval_utils_forVSE.eval_split(model, crit, loader, logger, eval_kwargs)
             logger.write_dict(lang_stats)
 
             # Write validation result into summary

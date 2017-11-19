@@ -6,16 +6,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b250006-f7de-4efb-9a95-597776d0723d" name="Default" comment="">
-      <change type="MOVED" beforePath="$PROJECT_DIR$/Trainer/train_CascadeNet.py" afterPath="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/Trainer/train_Serinet.py" afterPath="$PROJECT_DIR$/Trainer/train_Cascade_stat2in.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/models/CascadeNetModel.py" afterPath="$PROJECT_DIR$/models/Cascade_sta2inModel.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/models/SeriNetModel.py" afterPath="$PROJECT_DIR$/models/Cascade_ststModel.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/opts/opts_withCascadeNet.py" afterPath="$PROJECT_DIR$/opts/opts_withCascade_sta2in.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/opts/opts_withSeriNet.py" afterPath="$PROJECT_DIR$/opts/opts_withCascade_stst.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/Eval_utils/eval_utils_forVSE.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/Trainer/train_Cascade_stat2in.py" afterPath="$PROJECT_DIR$/Trainer/train_Cascade_stst2in_.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cider" afterPath="$PROJECT_DIR$/cider" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/eval_results/_val.json" afterPath="$PROJECT_DIR$/eval_results/_val.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" afterPath="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Trainer/train_vse_mle.py" afterPath="$PROJECT_DIR$/Trainer/train_vse_mle.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/misc/rewards.py" afterPath="$PROJECT_DIR$/misc/rewards.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/models/CommNetModel.py" afterPath="$PROJECT_DIR$/models/CommNetModel.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/models/__init__.py" afterPath="$PROJECT_DIR$/models/__init__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opts/opts_withCascade_sta2in.py" afterPath="$PROJECT_DIR$/opts/opts_withCascade_sta2in.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opts/opts_withCascade_stst.py" afterPath="$PROJECT_DIR$/opts/opts_withCascade_stst.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opts/opts_withVSE.py" afterPath="$PROJECT_DIR$/opts/opts_withVSE.py" />
     </list>
     <ignored path="self-critical.pytorch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,7 +29,9 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_Serinet.coverage" NAME="train_Serinet Coverage Results" MODIFIED="1511074453252" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_Serinet.coverage" NAME="train_Serinet Coverage Results" MODIFIED="1511108952564" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$opts_withVSE.coverage" NAME="opts_withVSE Coverage Results" MODIFIED="1511109239807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opts" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_Cascade_stst__1_.coverage" NAME="train_Cascade_stst (1) Coverage Results" MODIFIED="1511114076298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Trainer" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$opts_for_pretrain.coverage" NAME="opts_for_pretrain Coverage Results" MODIFIED="1509686841820" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_CascadeNet.coverage" NAME="train_CascadeNet Coverage Results" MODIFIED="1511071448061" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$prepro_labels.coverage" NAME="prepro_labels Coverage Results" MODIFIED="1509602485933" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
@@ -37,11 +41,14 @@
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_TS.coverage" NAME="train_TS Coverage Results" MODIFIED="1509938524151" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_vse_reward.coverage" NAME="train_vse_reward Coverage Results" MODIFIED="1510791426944" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$CascadeNetModel.coverage" NAME="CascadeNetModel Coverage Results" MODIFIED="1510672873920" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/models" />
-    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_TS_diff_model.coverage" NAME="train_TS_diff_model Coverage Results" MODIFIED="1509972218752" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_CommNet.coverage" NAME="train_CommNet Coverage Results" MODIFIED="1511059755717" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Trainer" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_TS_diff_model.coverage" NAME="train_TS_diff_model Coverage Results" MODIFIED="1511113688234" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Trainer" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_Cascade_stst.coverage" NAME="train_Cascade_stst Coverage Results" MODIFIED="1511113999002" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Trainer" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_FNet.coverage" NAME="train_FNet Coverage Results" MODIFIED="1510323305241" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$eval_utils_forVSE.coverage" NAME="eval_utils_forVSE Coverage Results" MODIFIED="1511110063618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Eval_utils" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$prepro_ngrams.coverage" NAME="prepro_ngrams Coverage Results" MODIFIED="1509776921455" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$test.coverage" NAME="test Coverage Results" MODIFIED="1510047152145" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_vse_mle.coverage" NAME="train_vse_mle Coverage Results" MODIFIED="1511110200673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Trainer" />
     <SUITE FILE_PATH="coverage/caption_selfcritic_gan$train_for_pretrain.coverage" NAME="train_for_pretrain Coverage Results" MODIFIED="1509689354969" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="CreatePatchCommitExecutor">
@@ -52,44 +59,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="opts_withCascade_stst.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_stst.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="52" column="61" lean-forward="false" selection-start-line="52" selection-start-column="61" selection-end-line="52" selection-end-column="61" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="train_Cascade_stat2in.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stat2in.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="179" column="78" lean-forward="false" selection-start-line="179" selection-start-column="68" selection-end-line="179" selection-end-column="78" />
-              <folding>
-                <element signature="e#582#1644#0" expanded="false" />
-                <element signature="e#1704#1822#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="eval_utils_for_FNet.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Eval_utils/eval_utils_for_FNet.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="208">
-              <caret line="94" column="39" lean-forward="true" selection-start-line="94" selection-start-column="39" selection-end-line="94" selection-end-column="39" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="opts_withCascade_sta2in.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_sta2in.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="59" column="59" lean-forward="false" selection-start-line="59" selection-start-column="59" selection-end-line="59" selection-end-column="59" />
+            <state relative-caret-position="288">
+              <caret line="37" column="83" lean-forward="true" selection-start-line="37" selection-start-column="83" selection-end-line="37" selection-end-column="83" />
               <folding>
                 <element signature="e#1#16#0" expanded="true" />
               </folding>
@@ -97,49 +71,26 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="train_Cascade_stst.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="train_Cascade_stst.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stst.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="275">
-              <caret line="119" column="13" lean-forward="false" selection-start-line="119" selection-start-column="13" selection-end-line="119" selection-end-column="13" />
+            <state relative-caret-position="342">
+              <caret line="137" column="0" lean-forward="true" selection-start-line="137" selection-start-column="0" selection-end-line="137" selection-end-column="0" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
-                <element signature="e#602#1664#0" expanded="false" />
-                <element signature="e#1724#1842#0" expanded="false" />
+                <element signature="e#582#1644#0" expanded="false" />
+                <element signature="e#1704#1822#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Cascade_sta2inModel.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/models/Cascade_sta2inModel.py">
+      <file leaf-file-name="opts_withCascade_stst.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_stst.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="51" column="51" lean-forward="true" selection-start-line="51" selection-start-column="51" selection-end-line="51" selection-end-column="51" />
-              <folding>
-                <element signature="e#0#38#0" expanded="true" />
-                <element signature="e#5102#9942#0" expanded="false" />
-                <element signature="e#5938#6546#0" expanded="false" />
-                <element signature="e#10013#11169#0" expanded="false" />
-                <element signature="e#11208#22410#0" expanded="false" />
-                <element signature="e#14825#20137#0" expanded="false" />
-                <element signature="e#26458#37833#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Cascade_ststModel.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/models/Cascade_ststModel.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-481">
-              <caret line="165" column="80" lean-forward="false" selection-start-line="165" selection-start-column="80" selection-end-line="165" selection-end-column="80" />
-              <folding>
-                <element signature="e#0#38#0" expanded="true" />
-                <element signature="e#5728#6336#0" expanded="false" />
-                <element signature="e#7938#8546#0" expanded="false" />
-                <element signature="e#14971#20283#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="126">
+              <caret line="9" column="25" lean-forward="true" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="25" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -155,10 +106,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>save</find>
-      <find>batch_</find>
-      <find>Best</find>
-      <find>best</find>
       <find>gate_funm</find>
       <find>Bleu</find>
       <find>bleu_1</find>
@@ -177,14 +124,18 @@
       <find>state_embed</find>
       <find>gate1</find>
       <find>tanh</find>
-      <find>after</find>
       <find>_T</find>
       <find>128</find>
       <find>batch_size</find>
       <find>extra_info</find>
       <find>bLEU_1</find>
+      <find>vse</find>
+      <find>exper</find>
       <find>Bleu_1</find>
       <find>iter</find>
+      <find>eval_utils</find>
+      <find>after</find>
+      <find>seri</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -193,14 +144,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/experiment/20171024_030848/trainlog.txt" />
-        <option value="$PROJECT_DIR$/models/ShowTellModel_vsemle.py" />
-        <option value="$PROJECT_DIR$/____test.py" />
-        <option value="$PROJECT_DIR$/models/__init__.py" />
-        <option value="$PROJECT_DIR$/train_vse_mle.py" />
-        <option value="$PROJECT_DIR$/_test.py" />
-        <option value="$PROJECT_DIR$/experiment/20171028_041719_selfcritic50epoch/trainlog.txt" />
-        <option value="$PROJECT_DIR$/experiment/20171029_223857/trainlog.txt" />
         <option value="$PROJECT_DIR$/experiment/20171030_070252/trainlog.txt" />
         <option value="$PROJECT_DIR$/scripts/prepro_labels.py" />
         <option value="$PROJECT_DIR$/scripts/prepro_feats.py" />
@@ -219,14 +162,12 @@
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/eval_utils_forCommNet.py" />
         <option value="$PROJECT_DIR$/opts_withCommNet.py" />
-        <option value="$PROJECT_DIR$/models/CommNetModel.py" />
         <option value="$PROJECT_DIR$/train_CommNet.py" />
         <option value="$PROJECT_DIR$/train_fightNet.py" />
         <option value="$PROJECT_DIR$/opts/opts_withF.py" />
         <option value="$PROJECT_DIR$/opts/opts_withFnet.py" />
         <option value="$PROJECT_DIR$/eval_utils_for_FNet.py" />
         <option value="$PROJECT_DIR$/train_FNet.py" />
-        <option value="$PROJECT_DIR$/opts/opts_withVSE.py" />
         <option value="$PROJECT_DIR$/train_vse_reward.py" />
         <option value="$PROJECT_DIR$/train_fuckingmodel.py" />
         <option value="$PROJECT_DIR$/train_SerinetModel.py" />
@@ -238,12 +179,22 @@
         <option value="$PROJECT_DIR$/train_CascadeNet.py" />
         <option value="$PROJECT_DIR$/misc/utils.py" />
         <option value="$PROJECT_DIR$/Trainer/train_CascadeNet.py" />
-        <option value="$PROJECT_DIR$/misc/rewards.py" />
         <option value="$PROJECT_DIR$/opts/opts_withCascadeNet.py" />
         <option value="$PROJECT_DIR$/models/CascadeNetModel.py" />
         <option value="$PROJECT_DIR$/opts/opts_withSeriNet.py" />
         <option value="$PROJECT_DIR$/Trainer/train_Serinet.py" />
         <option value="$PROJECT_DIR$/models/SeriNetModel.py" />
+        <option value="$PROJECT_DIR$/models/__init__.py" />
+        <option value="$PROJECT_DIR$/opts/opts_withVSE.py" />
+        <option value="$PROJECT_DIR$/Trainer/train_vse_mle.py" />
+        <option value="$PROJECT_DIR$/Eval_utils/eval_utils_forVSE.py" />
+        <option value="$PROJECT_DIR$/models/CommNetModel.py" />
+        <option value="$PROJECT_DIR$/opts/opts_withCascade_stst.py" />
+        <option value="$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD_scorer.py" />
+        <option value="$PROJECT_DIR$/misc/rewards.py" />
+        <option value="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" />
+        <option value="$PROJECT_DIR$/Trainer/train_Cascade_stst2in_.py" />
+        <option value="$PROJECT_DIR$/opts/opts_withCascade_sta2in.py" />
       </list>
     </option>
   </component>
@@ -254,8 +205,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="152" />
-    <option name="y" value="39" />
+    <option name="x" value="143" />
+    <option name="y" value="35" />
     <option name="width" value="1780" />
     <option name="height" value="1027" />
   </component>
@@ -285,13 +236,18 @@
             <path>
               <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
               <item name="caption.selfcritic.gan" type="462c0819:PsiDirectoryNode" />
+              <item name="Eval_utils" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
+              <item name="caption.selfcritic.gan" type="462c0819:PsiDirectoryNode" />
               <item name="experiment" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
               <item name="caption.selfcritic.gan" type="462c0819:PsiDirectoryNode" />
               <item name="experiment" type="462c0819:PsiDirectoryNode" />
-              <item name="20171119_155434" type="462c0819:PsiDirectoryNode" />
+              <item name="20171120_015001" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
@@ -302,11 +258,6 @@
               <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
               <item name="caption.selfcritic.gan" type="462c0819:PsiDirectoryNode" />
               <item name="opts" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
-              <item name="caption.selfcritic.gan" type="462c0819:PsiDirectoryNode" />
-              <item name="save" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="caption.selfcritic.gan" type="b2602c69:ProjectViewProjectNode" />
@@ -332,11 +283,11 @@
       <recent name="$PROJECT_DIR$/save" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/experiment/20171120_015001" />
       <recent name="$PROJECT_DIR$/Trainer" />
       <recent name="$PROJECT_DIR$/Eval_utils" />
       <recent name="$PROJECT_DIR$/experiment/20171116_135021" />
       <recent name="$PROJECT_DIR$/experiment/20171115_111136" />
-      <recent name="$PROJECT_DIR$/opts" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -351,7 +302,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.train_Serinet">
+  <component name="RunManager" selected="Python.train_Cascade_stst (1)">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -486,43 +437,25 @@
       <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
-    <configuration name="opts_withSeriNet" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="eval_utils_forVSE" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/opts" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Eval_utils" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="self-critical.pytorch" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/opts/opts_withCascade_stst.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Eval_utils/eval_utils_forVSE.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
-    <configuration name="train_CascadeNet" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="self-critical.pytorch" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-    </configuration>
-    <configuration name="train_CommNet" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="train_Cascade_stst (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -535,61 +468,79 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="self-critical.pytorch" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_CommNet.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_Cascade_stst.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
-    <configuration name="train_Serinet" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="train_Cascade_stst" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Trainer" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="self-critical.pytorch" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_Cascade_stat2in.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_Cascade_stst2in_.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
-    <configuration name="train_vse_reward" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="train_TS_diff_model" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Trainer" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="self-critical.pytorch" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_vse_reward.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_TS_diff_model.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="train_vse_mle" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Trainer" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="self-critical.pytorch" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Trainer/train_vse_mle.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
     <list size="5">
-      <item index="0" class="java.lang.String" itemvalue="Python.train_vse_reward" />
-      <item index="1" class="java.lang.String" itemvalue="Python.train_Serinet" />
-      <item index="2" class="java.lang.String" itemvalue="Python.train_CascadeNet" />
-      <item index="3" class="java.lang.String" itemvalue="Python.train_CommNet" />
-      <item index="4" class="java.lang.String" itemvalue="Python.opts_withSeriNet" />
+      <item index="0" class="java.lang.String" itemvalue="Python.train_vse_mle" />
+      <item index="1" class="java.lang.String" itemvalue="Python.eval_utils_forVSE" />
+      <item index="2" class="java.lang.String" itemvalue="Python.train_TS_diff_model" />
+      <item index="3" class="java.lang.String" itemvalue="Python.train_Cascade_stst" />
+      <item index="4" class="java.lang.String" itemvalue="Python.train_Cascade_stst (1)" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.train_Serinet" />
-        <item index="1" class="java.lang.String" itemvalue="Python.opts_withSeriNet" />
-        <item index="2" class="java.lang.String" itemvalue="Python.train_CascadeNet" />
-        <item index="3" class="java.lang.String" itemvalue="Python.train_CommNet" />
-        <item index="4" class="java.lang.String" itemvalue="Python.train_vse_reward" />
+        <item index="0" class="java.lang.String" itemvalue="Python.train_Cascade_stst (1)" />
+        <item index="1" class="java.lang.String" itemvalue="Python.train_Cascade_stst" />
+        <item index="2" class="java.lang.String" itemvalue="Python.train_TS_diff_model" />
+        <item index="3" class="java.lang.String" itemvalue="Python.train_vse_mle" />
+        <item index="4" class="java.lang.String" itemvalue="Python.eval_utils_forVSE" />
       </list>
     </recent_temporary>
   </component>
@@ -619,14 +570,14 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="152" y="39" width="1780" height="1027" extended-state="0" />
+    <frame x="143" y="35" width="1780" height="1027" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3289183" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3454746" sideWeight="0.5044025" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964602" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29801324" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35179153" sideWeight="0.49559748" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.35179153" sideWeight="0.49559748" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32858709" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19269663" sideWeight="0.4940978" order="1" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -725,7 +676,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Trainer/train_vse_mle.py</url>
-          <line>174</line>
+          <line>176</line>
           <option name="timeStamp" value="466" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -750,12 +701,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Trainer/train_vse_mle.py</url>
-          <line>137</line>
+          <line>138</line>
           <option name="timeStamp" value="489" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Trainer/train_vse_mle.py</url>
-          <line>150</line>
+          <line>152</line>
           <option name="timeStamp" value="490" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -874,94 +825,15 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="673" />
+      <option name="time" value="676" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/opts/opts_withVSE.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2340">
-          <caret line="132" column="23" lean-forward="false" selection-start-line="132" selection-start-column="23" selection-end-line="132" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171109_180259/trainlog.txt">
-      <provider selected="true" editor-type-id="LargeFileEditor">
-        <state relative-caret-position="53">
-          <caret line="21065" column="6" lean-forward="false" selection-start-line="21065" selection-start-column="0" selection-end-line="21065" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171109_220929/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171110_125047/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171110_112729/trainlog.txt" />
-    <entry file="file://$PROJECT_DIR$/experiment/20171110_131233/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="282">
-          <caret line="251071" column="6" lean-forward="false" selection-start-line="251071" selection-start-column="0" selection-end-line="251071" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD_scorer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="196" column="8" lean-forward="false" selection-start-line="196" selection-start-column="8" selection-end-line="196" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/opts/opts_withTS.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="475">
-          <caret line="36" column="60" lean-forward="false" selection-start-line="36" selection-start-column="60" selection-end-line="36" selection-end-column="60" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dataloader.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="43" column="64" lean-forward="false" selection-start-line="43" selection-start-column="64" selection-end-line="43" selection-end-column="64" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Eval_utils/eval_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="67" column="16" lean-forward="true" selection-start-line="67" selection-start-column="16" selection-end-line="67" selection-end-column="16" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment/20171113_022023/trainlog.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/modules/linear.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="54" column="0" lean-forward="false" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/autograd/variable.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="189">
           <caret line="77" column="0" lean-forward="false" selection-start-line="77" selection-start-column="0" selection-end-line="77" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/opts/opts_withCommNet.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="92" column="13" lean-forward="false" selection-start-line="92" selection-start-column="13" selection-end-line="92" selection-end-column="13" />
           <folding />
         </state>
       </provider>
@@ -1071,14 +943,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/misc/rewards_vse.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="576">
-          <caret line="72" column="0" lean-forward="false" selection-start-line="72" selection-start-column="0" selection-end-line="72" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiment/20171116_222817/trainlog.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="981">
@@ -1111,39 +975,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/models/CommNetModel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1188">
-          <caret line="18" column="22" lean-forward="true" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#5507#8851#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/misc/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="73" column="4" lean-forward="false" selection-start-line="73" selection-start-column="4" selection-end-line="73" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/models/FNetModel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-36">
-          <caret line="94" column="25" lean-forward="true" selection-start-line="94" selection-start-column="25" selection-end-line="94" selection-end-column="25" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#5345#5953#0" expanded="false" />
-            <element signature="e#7507#8115#0" expanded="false" />
-            <element signature="e#10433#21635#0" expanded="false" />
-            <element signature="e#14050#19362#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Trainer/train_CommNet.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="181">
@@ -1152,48 +983,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Trainer/train_TS.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2286">
           <caret line="14" column="25" lean-forward="true" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Trainer/train_TS_diff_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-661">
-          <caret line="205" column="72" lean-forward="false" selection-start-line="205" selection-start-column="72" selection-end-line="205" selection-end-column="72" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Trainer/train_vse_reward.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="142" column="32" lean-forward="false" selection-start-line="142" selection-start-column="32" selection-end-line="142" selection-end-column="32" />
-          <folding>
-            <element signature="e#529#1591#0" expanded="false" />
-            <element signature="e#1651#1769#0" expanded="false" />
-            <element signature="e#6866#6910#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Trainer/train_vse_mle.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="13" column="33" lean-forward="true" selection-start-line="13" selection-start-column="33" selection-end-line="13" selection-end-column="33" />
           <folding />
         </state>
       </provider>
@@ -1209,70 +1002,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/misc/rewards.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="455">
-          <caret line="431" column="0" lean-forward="true" selection-start-line="431" selection-start-column="0" selection-end-line="431" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#5647#7048#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stst.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="275">
-          <caret line="119" column="13" lean-forward="false" selection-start-line="119" selection-start-column="13" selection-end-line="119" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#602#1664#0" expanded="false" />
-            <element signature="e#1724#1842#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/modules/module.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="318" column="0" lean-forward="false" selection-start-line="318" selection-start-column="0" selection-end-line="318" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_sta2in.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="59" column="59" lean-forward="false" selection-start-line="59" selection-start-column="59" selection-end-line="59" selection-end-column="59" />
-          <folding>
-            <element signature="e#1#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_stst.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="52" column="61" lean-forward="false" selection-start-line="52" selection-start-column="61" selection-end-line="52" selection-end-column="61" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stat2in.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="179" column="78" lean-forward="false" selection-start-line="179" selection-start-column="68" selection-end-line="179" selection-end-column="78" />
-          <folding>
-            <element signature="e#582#1644#0" expanded="false" />
-            <element signature="e#1704#1822#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Eval_utils/eval_utils_for_FNet.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="208">
-          <caret line="94" column="39" lean-forward="true" selection-start-line="94" selection-start-column="39" selection-end-line="94" selection-end-column="39" />
+          <caret line="94" column="39" lean-forward="false" selection-start-line="94" selection-start-column="39" selection-end-line="94" selection-end-column="39" />
           <folding />
         </state>
       </provider>
@@ -1290,10 +1023,187 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/modules/module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="318" column="0" lean-forward="false" selection-start-line="318" selection-start-column="0" selection-end-line="318" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/misc/rewards_vse.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="468">
+          <caret line="45" column="0" lean-forward="false" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/misc/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="181">
+          <caret line="59" column="0" lean-forward="false" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="38" column="9" lean-forward="false" selection-start-line="38" selection-start-column="9" selection-end-line="38" selection-end-column="9" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Eval_utils/eval_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="19" column="4" lean-forward="false" selection-start-line="19" selection-start-column="4" selection-end-line="20" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/coco-caption/pycocotools/coco.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="451">
+          <caret line="72" column="52" lean-forward="false" selection-start-line="72" selection-start-column="37" selection-end-line="72" selection-end-column="52" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/eval_results/_val.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="318">
+          <caret line="0" column="398869" lean-forward="false" selection-start-line="0" selection-start-column="398869" selection-end-line="0" selection-end-column="398869" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/train_vse_reward.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="810">
+          <caret line="142" column="32" lean-forward="false" selection-start-line="142" selection-start-column="32" selection-end-line="142" selection-end-column="32" />
+          <folding>
+            <element signature="e#529#1591#0" expanded="false" />
+            <element signature="e#1651#1769#0" expanded="false" />
+            <element signature="e#6866#6910#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts/opts_withTS.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="612">
+          <caret line="36" column="60" lean-forward="false" selection-start-line="36" selection-start-column="60" selection-end-line="36" selection-end-column="60" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/ShowTellModel_vsemle.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="207">
+          <caret line="247" column="0" lean-forward="true" selection-start-line="247" selection-start-column="0" selection-end-line="247" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/train_vse_mle.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9">
+          <caret line="176" column="0" lean-forward="false" selection-start-line="176" selection-start-column="0" selection-end-line="176" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Eval_utils/eval_utils_forVSE.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="51" column="34" lean-forward="true" selection-start-line="51" selection-start-column="34" selection-end-line="51" selection-end-column="34" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts/opts_withVSE.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="125" column="59" lean-forward="true" selection-start-line="125" selection-start-column="59" selection-end-line="125" selection-end-column="59" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts/opts_withCommNet.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="10" column="61" lean-forward="false" selection-start-line="10" selection-start-column="61" selection-end-line="10" selection-end-column="61" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/dist-packages/torch/nn/functional.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="809" column="4" lean-forward="false" selection-start-line="809" selection-start-column="4" selection-end-line="809" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/CommNetModel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="451">
+          <caret line="276" column="0" lean-forward="true" selection-start-line="276" selection-start-column="0" selection-end-line="276" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#5753#9097#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/FNetModel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-738">
+          <caret line="94" column="25" lean-forward="true" selection-start-line="94" selection-start-column="25" selection-end-line="94" selection-end-column="25" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#5345#5953#0" expanded="false" />
+            <element signature="e#7507#8115#0" expanded="false" />
+            <element signature="e#10433#21635#0" expanded="false" />
+            <element signature="e#14050#19362#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/train_TS_diff_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="696">
+          <caret line="205" column="72" lean-forward="false" selection-start-line="205" selection-start-column="72" selection-end-line="205" selection-end-column="72" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="24" column="0" lean-forward="false" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/models/Cascade_sta2inModel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="51" column="51" lean-forward="true" selection-start-line="51" selection-start-column="51" selection-end-line="51" selection-end-column="51" />
+        <state relative-caret-position="297">
+          <caret line="53" column="67" lean-forward="false" selection-start-line="53" selection-start-column="67" selection-end-line="53" selection-end-column="67" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
             <element signature="e#5102#9942#0" expanded="false" />
@@ -1302,6 +1212,75 @@
             <element signature="e#11208#22410#0" expanded="false" />
             <element signature="e#14825#20137#0" expanded="false" />
             <element signature="e#26458#37833#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cider/pyciderevalcap/ciderD/ciderD_scorer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="468">
+          <caret line="68" column="57" lean-forward="false" selection-start-line="68" selection-start-column="57" selection-end-line="68" selection-end-column="57" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/misc/rewards.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="404" column="0" lean-forward="false" selection-start-line="404" selection-start-column="0" selection-end-line="404" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#5650#7051#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dataloader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="352">
+          <caret line="45" column="0" lean-forward="false" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_sta2in.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="37" column="83" lean-forward="true" selection-start-line="37" selection-start-column="83" selection-end-line="37" selection-end-column="83" />
+          <folding>
+            <element signature="e#1#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stst2in_.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="123" column="77" lean-forward="true" selection-start-line="123" selection-start-column="77" selection-end-line="123" selection-end-column="77" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#602#1664#0" expanded="false" />
+            <element signature="e#1724#1842#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts/opts_withCascade_stst.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="9" column="25" lean-forward="true" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Trainer/train_Cascade_stst.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="137" column="0" lean-forward="true" selection-start-line="137" selection-start-column="0" selection-end-line="137" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#582#1644#0" expanded="false" />
+            <element signature="e#1704#1822#0" expanded="false" />
           </folding>
         </state>
       </provider>
