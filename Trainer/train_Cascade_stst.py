@@ -14,7 +14,7 @@ from Eval_utils import eval_utils_for_FNet
 from dataloader import *
 from logger import Logger
 from misc.rewards import get_self_critical_reward_forCascade
-from models.Cascade_ststModel import SeriNetModel, ShowTellModel
+from models.Cascade_ststModel import Cascade_ststModel, ShowTellModel
 from opts import opts_withCascade_stst
 
 
@@ -85,7 +85,7 @@ def train(opt):
     model1.cuda()
     model2.cuda()
 
-    model = SeriNetModel(opt, model1, model2)
+    model = Cascade_ststModel(opt, model1, model2)
     #model.load_state_dict(torch.load('/home/vdo-gt/_code/caption.selfcritic.gan/experiment/20171113_170707/model.pth'))
     model.cuda()
     logger = Logger(opt)
@@ -120,18 +120,19 @@ def train(opt):
             loss = loss_1 + loss_2
             loss.backward()
         else:
-            #out1, out2 = model(fc_feats, att_feats, labels)
-            #loss_1 = crit(out1, labels[:,1:], masks[:,1:])
+            out1, out2 = model(fc_feats, att_feats, labels)
+            loss_1 = crit(out1, labels[:,1:], masks[:,1:])
             #loss_1.backward(retain_graph=True)
 
             gen_result_1, sample_logprobs_1, gen_result_2, sample_logprobs_2 = model.sample(fc_feats, att_feats, {'sample_max': 0}, mode='sc')
             reward_2 = get_self_critical_reward_forCascade(model, fc_feats, att_feats, data, gen_result_1, gen_result_2, logger)
 
             loss_2 = rl_crit(sample_logprobs_2, gen_result_2, Variable(torch.from_numpy(reward_2).float().cuda(), requires_grad=False))
-            loss_2.backward(retain_graph=True)
+            #loss_2.backward(retain_graph=True)
 
-            #loss = loss_1 + loss_2
-            loss = loss_2
+            loss = loss_1 + loss_2
+            loss.backward()
+            #loss = loss_2
 
         utils.clip_gradient_2(optimizer, opt.grad_clip)
         optimizer.step()

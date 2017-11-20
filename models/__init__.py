@@ -36,7 +36,8 @@ def setup(opt):
     elif opt.caption_model == 'topdown':
         model = TopDownModel(opt)
     elif opt.caption_model == 'show_tell':
-        #model = ShowTellModel(opt)
+        model = ShowTellModel(opt)
+    elif opt.caption_model == 'show_tell_vsemle':
         model = ShowTellModel_vsemle(opt)
     else:
         raise Exception("Caption model not supported: {}".format(opt.caption_model))

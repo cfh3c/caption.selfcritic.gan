@@ -13,9 +13,9 @@ import time
 from six.moves import cPickle
 
 
-class SeriNetModel(nn.Module):
+class Cascade_ststModel(nn.Module):
     def __init__(self, opt, model1, model2):
-        super(SeriNetModel, self).__init__()
+        super(Cascade_ststModel, self).__init__()
         self.opt = opt
 
         self.model1 = model1

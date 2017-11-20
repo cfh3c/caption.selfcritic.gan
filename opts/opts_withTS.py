@@ -8,22 +8,22 @@ def parse_opt():
     parser = argparse.ArgumentParser()
 
     # Data input settings
-    parser.add_argument('--input_json', type=str, default='data/cocotalk.json',
+    parser.add_argument('--input_json', type=str, default='../data/cocotalk.json',
                     help='path to the json file containing additional info and vocab')
     parser.add_argument('--input_fc_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_fc',
                     help='path to the directory containing the preprocessed fc feats')
     parser.add_argument('--input_att_dir', type=str, default='/media/vdo-gt/Repository/Repository/COCO/feats/cocotalk_att',
                     help='path to the directory containing the preprocessed att feats')
-    parser.add_argument('--input_label_h5', type=str, default='data/cocotalk_label.h5',
+    parser.add_argument('--input_label_h5', type=str, default='../data/cocotalk_label.h5',
                     help='path to the h5file containing the preprocessed dataset')
-    parser.add_argument('--start_from_T', type=str, default='save/att2in/',
+    parser.add_argument('--start_from_T', type=str, default='../save/att2in/',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
                                               Note: this file contains absolute paths, be careful when moving files around;
                         'model.ckpt-*'      : file(s) with model definition (created by tf)
                     """)
-    parser.add_argument('--start_from_S', type=str, default='save/showtell_2/',
+    parser.add_argument('--start_from_S', type=str, default='../save/showtell_2/',
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process:
                         'infos.pkl'         : configuration;
                         'checkpoint'        : paths to model file(s) (created by tf).
@@ -106,7 +106,7 @@ def parse_opt():
                     help='how often to save a model checkpoint (in iterations)?')
     # parser.add_argument('--checkpoint_path', type=str, default='save',
     #                 help='directory to store checkpointed models')
-    parser.add_argument('--checkpoint_path', type=str, default='experiment/%s' % datetime.today().strftime('%Y%m%d_%H%M%S'))
+    parser.add_argument('--checkpoint_path', type=str, default='../experiment/%s' % datetime.today().strftime('%Y%m%d_%H%M%S'))
     parser.add_argument('--language_eval', type=int, default=1,
                     help='Evaluate language as well (1 = yes, 0 = no)? BLEU/CIDEr/METEOR/ROUGE_L? requires coco-caption code from Github.')
     parser.add_argument('--losses_log_every', type=int, default=25,
@@ -186,8 +186,8 @@ def parse_opt():
     assert args.load_best_score == 0 or args.load_best_score == 1, "language_eval should be 0 or 1"
     assert args.train_only == 0 or args.train_only == 1, "language_eval should be 0 or 1"
 
-    if not os.path.isdir('experiment'):
-        os.mkdir('experiment')
+    if not os.path.isdir('../experiment'):
+        os.mkdir('../experiment')
     if not os.path.isdir(args.checkpoint_path):
         os.mkdir(args.checkpoint_path)
 

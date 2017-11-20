@@ -25,8 +25,8 @@ def parse_opt():
                     """)
 
     # Model settings
-    parser.add_argument('--caption_model', type=str, default="show_tell",
-                    help='show_tell, show_attend_tell, all_img, fc, att2in, att2in2, adaatt, adaattmo, topdown')
+    parser.add_argument('--caption_model', type=str, default="show_tell_vsemle",
+                    help='show_tell, show_attend_tell, all_img, fc, att2in, att2in2, adaatt, adaattmo, topdown, show_tell_vsemle')
     parser.add_argument('--rnn_size', type=int, default=512,
                     help='size of the rnn in number of hidden nodes in each layer')
     parser.add_argument('--num_layers', type=int, default=1,
@@ -179,8 +179,8 @@ def parse_opt():
     assert args.load_best_score == 0 or args.load_best_score == 1, "language_eval should be 0 or 1"
     assert args.train_only == 0 or args.train_only == 1, "language_eval should be 0 or 1"
 
-    if not os.path.isdir('experiment'):
-        os.mkdir('experiment')
+    if not os.path.isdir('../experiment'):
+        os.mkdir('../experiment')
     if not os.path.isdir(args.checkpoint_path):
         os.mkdir(args.checkpoint_path)
 
